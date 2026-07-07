@@ -1,0 +1,2614 @@
+[
+  {
+    "query": "Patients with HbA1c above 7%",
+    "interpreted_meaning": {
+      "original_query": "Patients with HbA1c above 7%",
+      "clinical_entities": [
+        "HbA1c"
+      ],
+      "synonyms": [
+        "A1c",
+        "glycated hemoglobin",
+        "glycohemoglobin"
+      ],
+      "domain": "measurement",
+      "constraint": {
+        "operator": ">",
+        "value": 7,
+        "unit": "%"
+      },
+      "status": "any",
+      "negative_constraints": [
+        "Hgb A1c goal MFr Bld",
+        "HbA1c per IFCC-RMP for CDT SFr Bld"
+      ]
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "4548-4",
+        "display": "Hemoglobin A1c/Hemoglobin.total in Blood",
+        "rank": 1
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "17856-6",
+        "display": "Hemoglobin A1c/Hemoglobin.total in Blood by HPLC",
+        "rank": 2
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "59261-8",
+        "display": "HbA1c per IFCC-RMP for CDT SFr Bld",
+        "rank": 3
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "41960-6",
+        "display": "HbA1c Measurement Device Class",
+        "rank": 4
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "41961-4",
+        "display": "HbA1c Measurement Device Vendor name",
+        "rank": 5
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "41964-8",
+        "display": "HbA1c Measurement Device Software vers",
+        "rank": 6
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "41963-0",
+        "display": "HbA1c Measurement Device Serial #",
+        "rank": 7
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "86910-7",
+        "display": "Hgb A1c goal MFr Bld",
+        "rank": 8
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "4548-4",
+        "display": "Hemoglobin A1c/Hemoglobin.total in Blood",
+        "confidence": 1.0,
+        "reason": "This is the standard LOINC code for HbA1c measurement in blood, which directly supports the clinical requirement."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "17856-6",
+        "display": "Hemoglobin A1c/Hemoglobin.total in Blood by HPLC",
+        "confidence": 0.95,
+        "reason": "This is a valid method-specific code for HbA1c measurement in blood."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "LOINC",
+        "code": "41960-6",
+        "display": "HbA1c Measurement Device Class",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "41961-4",
+        "display": "HbA1c Measurement Device Vendor name",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "41964-8",
+        "display": "HbA1c Measurement Device Software vers",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "41963-0",
+        "display": "HbA1c Measurement Device Serial #",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "59261-8",
+        "display": "HbA1c per IFCC-RMP for CDT SFr Bld",
+        "reason": "This code represents IFCC units (mmol/mol) rather than the percentage unit specified in the clinical constraint."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "86910-7",
+        "display": "Hgb A1c goal MFr Bld",
+        "reason": "Represents a clinical goal or target value rather than an actual observed measurement value."
+      }
+    ],
+    "final_logic": {
+      "concept": "HbA1c measurement",
+      "condition": "value > 7%"
+    },
+    "metadata": {
+      "trace_id": "t-1783449770-48890",
+      "duration_ms": 25294.99,
+      "correction_attempts": 2,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with fasting glucose greater than 126 mg/dL",
+    "interpreted_meaning": {
+      "original_query": "Patients with fasting glucose greater than 126 mg/dL",
+      "clinical_entities": [
+        "fasting plasma glucose"
+      ],
+      "synonyms": [
+        "fasting blood sugar",
+        "FPG",
+        "fasting glucose"
+      ],
+      "domain": "measurement",
+      "constraint": {
+        "operator": ">",
+        "value": 126,
+        "unit": "mg/dL"
+      },
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "1558-6",
+        "display": "Fasting Glucose in Serum or Plasma",
+        "rank": 1
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "35184-1",
+        "display": "Glucose p fast SerPl-msCnc",
+        "rank": 2
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "1550-3",
+        "display": "Glucose pre 12h fast SerPl-mCnc",
+        "rank": 3
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "14771-0",
+        "display": "Glucose p fast SerPl-sCnc",
+        "rank": 4
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "14769-4",
+        "display": "Glucose pre 12h fast SerPl-sCnc",
+        "rank": 5
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "62852-9",
+        "display": "PhenX - fasting plasma glucose for diabetes screening - glucometer protocol 140802",
+        "rank": 6
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "66179-3",
+        "display": "Exclusion criteria glucose PhenX",
+        "rank": 7
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "1558-6",
+        "display": "Fasting Glucose in Serum or Plasma",
+        "confidence": 1.0,
+        "reason": "Directly measures fasting plasma glucose in serum/plasma, matching the clinical requirement."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "35184-1",
+        "display": "Glucose p fast SerPl-msCnc",
+        "confidence": 0.95,
+        "reason": "Standard LOINC representation for fasting plasma glucose concentration."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "1550-3",
+        "display": "Glucose pre 12h fast SerPl-mCnc",
+        "confidence": 0.9,
+        "reason": "Specifically defined as 12-hour fast, which satisfies the fasting requirement."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "14771-0",
+        "display": "Glucose p fast SerPl-sCnc",
+        "confidence": 0.9,
+        "reason": "Standard LOINC representation for fasting plasma glucose."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "14769-4",
+        "display": "Glucose pre 12h fast SerPl-sCnc",
+        "confidence": 0.9,
+        "reason": "Standard LOINC representation for 12-hour fasting glucose."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "LOINC",
+        "code": "66179-3",
+        "display": "Exclusion criteria glucose PhenX",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "62852-9",
+        "display": "PhenX - fasting plasma glucose for diabetes screening - glucometer protocol 140802",
+        "reason": "This is a PhenX protocol/survey instrument code, not a clinical laboratory result code."
+      }
+    ],
+    "final_logic": {
+      "concept": "fasting plasma glucose measurement",
+      "condition": "value > 126 mg/dL"
+    },
+    "metadata": {
+      "trace_id": "t-1783449798-51134",
+      "duration_ms": 7068.26,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with LDL cholesterol below 100 mg/dL",
+    "interpreted_meaning": {
+      "original_query": "Patients with LDL cholesterol below 100 mg/dL",
+      "clinical_entities": [
+        "low-density lipoprotein cholesterol"
+      ],
+      "synonyms": [
+        "LDL",
+        "LDL-C",
+        "LDL cholesterol",
+        "calculated LDL",
+        "LDL-C calc",
+        "bad cholesterol"
+      ],
+      "domain": "measurement",
+      "constraint": {
+        "operator": "<",
+        "value": 100,
+        "unit": "mg/dL"
+      },
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "13457-7",
+        "display": "LDL Cholesterol in Serum/Plasma",
+        "rank": 1
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "18262-6",
+        "display": "LDL Cholesterol calculated",
+        "rank": 2
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "108018-3",
+        "display": "LDLc Msmt SerPl",
+        "rank": 3
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "43394-6",
+        "display": "LDLc-Ac SerPl-mCnc",
+        "rank": 4
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "35198-1",
+        "display": "LDLc SerPl-msCnc",
+        "rank": 5
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "100732-7",
+        "display": "Cholesterol.in lipoprotein (little a) & Cholesterol.in LDL panel",
+        "rank": 6
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "100733-5",
+        "display": "LDLc cor Lpa Cholest",
+        "rank": 7
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "13460-1",
+        "display": "Deprecated LDLc/HDLc SerPl-mRto",
+        "rank": 8
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "2090-9",
+        "display": "Deprecated LDLc SerPl-mCnc",
+        "rank": 9
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "13457-7",
+        "display": "LDL Cholesterol in Serum/Plasma",
+        "confidence": 1.0,
+        "reason": "Standard lab code for direct measurement of LDL cholesterol."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "18262-6",
+        "display": "LDL Cholesterol calculated",
+        "confidence": 0.95,
+        "reason": "Standard calculated LDL measurement, widely used in clinical cohorts."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "108018-3",
+        "display": "LDLc Msmt SerPl",
+        "confidence": 0.95,
+        "reason": "Accurate clinical mapping for LDL measurement."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "43394-6",
+        "display": "LDLc-Ac SerPl-mCnc",
+        "confidence": 0.95,
+        "reason": "Represents mass concentration measurement of LDL cholesterol."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "35198-1",
+        "display": "LDLc SerPl-msCnc",
+        "confidence": 0.95,
+        "reason": "Represents mass concentration measurement of LDL cholesterol."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "LOINC",
+        "code": "100732-7",
+        "display": "Cholesterol.in lipoprotein (little a) & Cholesterol.in LDL panel",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "100733-5",
+        "display": "LDLc cor Lpa Cholest",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "13460-1",
+        "display": "Deprecated LDLc/HDLc SerPl-mRto",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "2090-9",
+        "display": "Deprecated LDLc SerPl-mCnc",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      }
+    ],
+    "final_logic": {
+      "concept": "low-density lipoprotein cholesterol measurement",
+      "condition": "value < 100 mg/dL"
+    },
+    "metadata": {
+      "trace_id": "t-1783449808-26576",
+      "duration_ms": 7122.63,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with eGFR less than 60 mL/min/1.73m\u00b2",
+    "interpreted_meaning": {
+      "original_query": "Patients with eGFR less than 60 mL/min/1.73m\u00b2",
+      "clinical_entities": [
+        "estimated glomerular filtration rate"
+      ],
+      "synonyms": [
+        "eGFR",
+        "GFR",
+        "glomerular filtration rate",
+        "eGFR CKD-EPI",
+        "CKD-EPI GFR",
+        "MDRD GFR"
+      ],
+      "domain": "measurement",
+      "constraint": {
+        "operator": "<",
+        "value": 60,
+        "unit": "mL/min/1.73m\u00b2"
+      },
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "33914-3",
+        "display": "eGFR",
+        "rank": 1
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "62238-1",
+        "display": "Glomerular filtration rate/1.73 sq M.predicted by Creatinine-based formula (CKD-EPI)",
+        "rank": 2
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "96083-1",
+        "display": "HEDIS MY 2020 eGFR Lab Test",
+        "rank": 3
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "66615-6",
+        "display": "Renal GFR <50% Reported",
+        "rank": 4
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "33914-3",
+        "display": "eGFR",
+        "confidence": 1.0,
+        "reason": "This is the standard LOINC code for estimated glomerular filtration rate, which directly maps to the clinical entity."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "62238-1",
+        "display": "Glomerular filtration rate/1.73 sq M.predicted by Creatinine-based formula (CKD-EPI)",
+        "confidence": 0.95,
+        "reason": "This code specifically identifies the normalized eGFR unit (1.73 sq M), aligning perfectly with the clinical requirement for the specified units."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "LOINC",
+        "code": "66615-6",
+        "display": "Renal GFR <50% Reported",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "96083-1",
+        "display": "HEDIS MY 2020 eGFR Lab Test",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      }
+    ],
+    "final_logic": {
+      "concept": "estimated glomerular filtration rate measurement",
+      "condition": "value < 60 mL/min/1.73m\u00b2"
+    },
+    "metadata": {
+      "trace_id": "t-1783449818-22334",
+      "duration_ms": 7346.87,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with systolic blood pressure above 140 mmHg",
+    "interpreted_meaning": {
+      "original_query": "Patients with systolic blood pressure above 140 mmHg",
+      "clinical_entities": [
+        "systolic blood pressure"
+      ],
+      "synonyms": [
+        "SBP",
+        "systolic BP"
+      ],
+      "domain": "measurement",
+      "constraint": {
+        "operator": ">",
+        "value": 140,
+        "unit": "mmHg"
+      },
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "8480-6",
+        "display": "Systolic blood pressure",
+        "rank": 1
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "96608-5",
+        "display": "BP Sys Avg",
+        "rank": 2
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "8512-6",
+        "display": "Radial a BP sys",
+        "rank": 3
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "87739-9",
+        "display": "BP sys--W exercise",
+        "rank": 4
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "60984-2",
+        "display": "Aorta BP sys",
+        "rank": 5
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "8440-0",
+        "display": "PA BP sys",
+        "rank": 6
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "8450-9",
+        "display": "BP sys--exp",
+        "rank": 7
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "60987-5",
+        "display": "CVP sys",
+        "rank": 8
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "8480-6",
+        "display": "Systolic blood pressure",
+        "confidence": 1.0,
+        "reason": "This is the standard, generic LOINC code for systolic blood pressure measurement, universally applicable to the query."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "96608-5",
+        "display": "BP Sys Avg",
+        "confidence": 0.9,
+        "reason": "Includes average systolic blood pressure, which is clinically valid for determining if a patient meets the threshold of 140 mmHg."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "LOINC",
+        "code": "60987-5",
+        "display": "CVP sys",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "8512-6",
+        "display": "Radial a BP sys",
+        "reason": "Highly specific site-based measurement (radial artery) not representative of routine systemic systolic blood pressure."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "87739-9",
+        "display": "BP sys--W exercise",
+        "reason": "Excludes baseline resting systolic blood pressure; represents dynamic exercise state."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "60984-2",
+        "display": "Aorta BP sys",
+        "reason": "Refers to invasive aortic pressure measurement, not standard systemic blood pressure."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "8440-0",
+        "display": "PA BP sys",
+        "reason": "Refers to Pulmonary Artery systolic pressure, which is hemodynamically distinct from systemic blood pressure."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "8450-9",
+        "display": "BP sys--exp",
+        "reason": "Ambiguous/non-standard reference or procedural coding."
+      }
+    ],
+    "final_logic": {
+      "concept": "systolic blood pressure measurement",
+      "condition": "value > 140 mmHg"
+    },
+    "metadata": {
+      "trace_id": "t-1783449829-47369",
+      "duration_ms": 9563.38,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients diagnosed with type 2 diabetes",
+    "interpreted_meaning": {
+      "original_query": "Patients diagnosed with type 2 diabetes",
+      "clinical_entities": [
+        "Type 2 diabetes mellitus"
+      ],
+      "synonyms": [
+        "T2D",
+        "T2DM",
+        "non-insulin dependent diabetes mellitus",
+        "adult-onset diabetes"
+      ],
+      "domain": "condition",
+      "constraint": null,
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11",
+        "display": "Type 2 diabetes mellitus",
+        "rank": 1
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.9",
+        "display": "Type 2 diabetes mellitus without complications",
+        "rank": 2
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.65",
+        "display": "Type 2 diabetes mellitus with hyperglycemia",
+        "rank": 3
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.21",
+        "display": "Type 2 diabetes mellitus with diabetic nephropathy",
+        "rank": 4
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.36",
+        "display": "Type 2 diabetes mellitus with diabetic cataract",
+        "rank": 5
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.41",
+        "display": "Type 2 diabetes mellitus with diabetic mononeuropathy",
+        "rank": 6
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.42",
+        "display": "Type 2 diabetes mellitus with diabetic polyneuropathy",
+        "rank": 7
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E10.A2",
+        "display": "Type 1 diabetes mellitus, presymptomatic, Stage 2",
+        "rank": 8
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11",
+        "display": "Type 2 diabetes mellitus",
+        "confidence": 1.0,
+        "reason": "Parent category for Type 2 diabetes mellitus covering all manifestations."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.9",
+        "display": "Type 2 diabetes mellitus without complications",
+        "confidence": 1.0,
+        "reason": "Specific subcategory for Type 2 diabetes."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.65",
+        "display": "Type 2 diabetes mellitus with hyperglycemia",
+        "confidence": 1.0,
+        "reason": "Specific clinical manifestation of Type 2 diabetes."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.21",
+        "display": "Type 2 diabetes mellitus with diabetic nephropathy",
+        "confidence": 1.0,
+        "reason": "Specific complication of Type 2 diabetes."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.36",
+        "display": "Type 2 diabetes mellitus with diabetic cataract",
+        "confidence": 1.0,
+        "reason": "Specific complication of Type 2 diabetes."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.41",
+        "display": "Type 2 diabetes mellitus with diabetic mononeuropathy",
+        "confidence": 1.0,
+        "reason": "Specific complication of Type 2 diabetes."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E11.42",
+        "display": "Type 2 diabetes mellitus with diabetic polyneuropathy",
+        "confidence": 1.0,
+        "reason": "Specific complication of Type 2 diabetes."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "E10.A2",
+        "display": "Type 1 diabetes mellitus, presymptomatic, Stage 2",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      }
+    ],
+    "final_logic": {
+      "concept": "Type 2 diabetes mellitus diagnosis",
+      "condition": "diagnosis present"
+    },
+    "metadata": {
+      "trace_id": "t-1783449841-33440",
+      "duration_ms": 7236.81,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with chronic kidney disease stage 3",
+    "interpreted_meaning": {
+      "original_query": "Patients with chronic kidney disease stage 3",
+      "clinical_entities": [
+        "chronic kidney disease stage 3"
+      ],
+      "synonyms": [
+        "CKD stage 3",
+        "stage 3 chronic kidney disease",
+        "stage 3 CKD",
+        "moderate chronic kidney disease"
+      ],
+      "domain": "condition",
+      "constraint": {
+        "operator": "==",
+        "value": "3",
+        "unit": "stage"
+      },
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.30",
+        "display": "Chronic kidney disease, stage 3 unspecified",
+        "rank": 1
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.31",
+        "display": "Chronic kidney disease, stage 3a",
+        "rank": 2
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.32",
+        "display": "Chronic kidney disease, stage 3b",
+        "rank": 3
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.9",
+        "display": "Chronic kidney disease, unspecified",
+        "rank": 4
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I12.9",
+        "display": "Hypertensive chronic kidney disease with stage 1 through stage 4 chronic kidney disease, or unspecified chronic kidney disease",
+        "rank": 5
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I12.0",
+        "display": "Hypertensive chronic kidney disease with stage 5 chronic kidney disease or end stage renal disease",
+        "rank": 6
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "D63.1",
+        "display": "Anemia in chronic kidney disease",
+        "rank": 7
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.1",
+        "display": "Chronic kidney disease, stage 1",
+        "rank": 8
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.5",
+        "display": "Chronic kidney disease, stage 5",
+        "rank": 9
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I13.0",
+        "display": "Hypertensive heart and chronic kidney disease with heart failure and stage 1 through stage 4 chronic kidney disease, or unspecified chronic kidney disease",
+        "rank": 10
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.30",
+        "display": "Chronic kidney disease, stage 3 unspecified",
+        "confidence": 1.0,
+        "reason": "Directly maps to CKD stage 3 as requested in the query."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.31",
+        "display": "Chronic kidney disease, stage 3a",
+        "confidence": 0.95,
+        "reason": "Sub-classification of stage 3, clinically appropriate to include for cohort accuracy."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.32",
+        "display": "Chronic kidney disease, stage 3b",
+        "confidence": 0.95,
+        "reason": "Sub-classification of stage 3, clinically appropriate to include for cohort accuracy."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.9",
+        "display": "Chronic kidney disease, unspecified",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I12.9",
+        "display": "Hypertensive chronic kidney disease with stage 1 through stage 4 chronic kidney disease, or unspecified chronic kidney disease",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I12.0",
+        "display": "Hypertensive chronic kidney disease with stage 5 chronic kidney disease or end stage renal disease",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "D63.1",
+        "display": "Anemia in chronic kidney disease",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.1",
+        "display": "Chronic kidney disease, stage 1",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "N18.5",
+        "display": "Chronic kidney disease, stage 5",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I13.0",
+        "display": "Hypertensive heart and chronic kidney disease with heart failure and stage 1 through stage 4 chronic kidney disease, or unspecified chronic kidney disease",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      }
+    ],
+    "final_logic": {
+      "concept": "chronic kidney disease stage 3",
+      "condition": "diagnosis present"
+    },
+    "metadata": {
+      "trace_id": "t-1783449852-37003",
+      "duration_ms": 13402.73,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with heart failure",
+    "interpreted_meaning": {
+      "original_query": "Patients with heart failure",
+      "clinical_entities": [
+        "heart failure"
+      ],
+      "synonyms": [
+        "congestive heart failure",
+        "CHF",
+        "HF",
+        "cardiac failure"
+      ],
+      "domain": "condition",
+      "constraint": null,
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I50.9",
+        "display": "Heart failure, unspecified",
+        "rank": 1
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I50.814",
+        "display": "Right heart failure due to left heart failure",
+        "rank": 2
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I09.81",
+        "display": "Rheumatic heart failure",
+        "rank": 3
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I50.82",
+        "display": "Biventricular heart failure",
+        "rank": 4
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I50.89",
+        "display": "Other heart failure",
+        "rank": 5
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I11.0",
+        "display": "Hypertensive heart disease with heart failure",
+        "rank": 6
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "T86.22",
+        "display": "Heart transplant failure",
+        "rank": 7
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I50.9",
+        "display": "Heart failure, unspecified",
+        "confidence": 1.0,
+        "reason": "Direct clinical match for heart failure."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I50.814",
+        "display": "Right heart failure due to left heart failure",
+        "confidence": 1.0,
+        "reason": "Specific type of heart failure."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I09.81",
+        "display": "Rheumatic heart failure",
+        "confidence": 1.0,
+        "reason": "Specific type of heart failure."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I50.82",
+        "display": "Biventricular heart failure",
+        "confidence": 1.0,
+        "reason": "Specific type of heart failure."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I50.89",
+        "display": "Other heart failure",
+        "confidence": 1.0,
+        "reason": "Specific type of heart failure."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "I11.0",
+        "display": "Hypertensive heart disease with heart failure",
+        "confidence": 1.0,
+        "reason": "Explicit inclusion of heart failure as a clinical condition."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "T86.22",
+        "display": "Heart transplant failure",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      }
+    ],
+    "final_logic": {
+      "concept": "heart failure diagnosis",
+      "condition": "diagnosis present"
+    },
+    "metadata": {
+      "trace_id": "t-1783449868-60506",
+      "duration_ms": 7208.4,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with COPD",
+    "interpreted_meaning": {
+      "original_query": "Patients with COPD",
+      "clinical_entities": [
+        "Chronic Obstructive Pulmonary Disease"
+      ],
+      "synonyms": [
+        "COPD",
+        "Chronic Obstructive Airway Disease",
+        "COAD",
+        "Chronic Obstructive Lung Disease",
+        "COLD"
+      ],
+      "domain": "condition",
+      "constraint": null,
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "J44.9",
+        "display": "Chronic obstructive pulmonary disease, unspecified",
+        "rank": 1
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "J44.89",
+        "display": "Other specified chronic obstructive pulmonary disease",
+        "rank": 2
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "J44.1",
+        "display": "Chronic obstructive pulmonary disease with (acute) exacerbation",
+        "rank": 3
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "J44.0",
+        "display": "Chronic obstructive pulmonary disease with (acute) lower respiratory infection",
+        "rank": 4
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "J44.9",
+        "display": "Chronic obstructive pulmonary disease, unspecified",
+        "confidence": 1.0,
+        "reason": "Direct clinical match for the general condition of COPD."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "J44.89",
+        "display": "Other specified chronic obstructive pulmonary disease",
+        "confidence": 1.0,
+        "reason": "Includes specific subtypes of COPD requested by the cohort query."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "J44.1",
+        "display": "Chronic obstructive pulmonary disease with (acute) exacerbation",
+        "confidence": 1.0,
+        "reason": "An active manifestation of COPD, clinically relevant to a COPD cohort."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "J44.0",
+        "display": "Chronic obstructive pulmonary disease with (acute) lower respiratory infection",
+        "confidence": 1.0,
+        "reason": "Comorbid manifestation of COPD, clinically relevant to a COPD cohort."
+      }
+    ],
+    "rejected_candidates": [],
+    "final_logic": {
+      "concept": "Chronic Obstructive Pulmonary Disease diagnosis",
+      "condition": "diagnosis present"
+    },
+    "metadata": {
+      "trace_id": "t-1783449878-33615",
+      "duration_ms": 7513.46,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with rheumatoid arthritis",
+    "interpreted_meaning": {
+      "original_query": "Patients with rheumatoid arthritis",
+      "clinical_entities": [
+        "rheumatoid arthritis"
+      ],
+      "synonyms": [
+        "RA"
+      ],
+      "domain": "condition",
+      "constraint": null,
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.08",
+        "display": "Rheumatoid arthritis without rheumatoid factor, vertebrae",
+        "rank": 1
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.9",
+        "display": "Rheumatoid arthritis, unspecified",
+        "rank": 2
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M05.9",
+        "display": "Rheumatoid arthritis with rheumatoid factor, unspecified",
+        "rank": 3
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.00",
+        "display": "Rheumatoid arthritis without rheumatoid factor, unspecified site",
+        "rank": 4
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.011",
+        "display": "Rheumatoid arthritis without rheumatoid factor, right shoulder",
+        "rank": 5
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.012",
+        "display": "Rheumatoid arthritis without rheumatoid factor, left shoulder",
+        "rank": 6
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.019",
+        "display": "Rheumatoid arthritis without rheumatoid factor, unspecified shoulder",
+        "rank": 7
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.9",
+        "display": "Rheumatoid arthritis, unspecified",
+        "confidence": 1.0,
+        "reason": "Direct clinical match for rheumatoid arthritis."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M05.9",
+        "display": "Rheumatoid arthritis with rheumatoid factor, unspecified",
+        "confidence": 1.0,
+        "reason": "Specific sub-type of rheumatoid arthritis."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.08",
+        "display": "Rheumatoid arthritis without rheumatoid factor, vertebrae",
+        "confidence": 1.0,
+        "reason": "Specific clinical manifestation of rheumatoid arthritis."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.00",
+        "display": "Rheumatoid arthritis without rheumatoid factor, unspecified site",
+        "confidence": 1.0,
+        "reason": "Specific clinical manifestation of rheumatoid arthritis."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.011",
+        "display": "Rheumatoid arthritis without rheumatoid factor, right shoulder",
+        "confidence": 1.0,
+        "reason": "Specific clinical manifestation of rheumatoid arthritis."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.012",
+        "display": "Rheumatoid arthritis without rheumatoid factor, left shoulder",
+        "confidence": 1.0,
+        "reason": "Specific clinical manifestation of rheumatoid arthritis."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "M06.019",
+        "display": "Rheumatoid arthritis without rheumatoid factor, unspecified shoulder",
+        "confidence": 1.0,
+        "reason": "Specific clinical manifestation of rheumatoid arthritis."
+      }
+    ],
+    "rejected_candidates": [],
+    "final_logic": {
+      "concept": "rheumatoid arthritis diagnosis",
+      "condition": "diagnosis present"
+    },
+    "metadata": {
+      "trace_id": "t-1783449889-57868",
+      "duration_ms": 9872.23,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients currently taking metformin",
+    "interpreted_meaning": {
+      "original_query": "Patients currently taking metformin",
+      "clinical_entities": [
+        "Metformin"
+      ],
+      "synonyms": [
+        "Glucophage",
+        "Fortamet",
+        "Glumetza",
+        "Riomet",
+        "Metformin hydrochloride"
+      ],
+      "domain": "drug",
+      "constraint": null,
+      "status": "current",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "6809",
+        "display": "metformin",
+        "rank": 1
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1161611",
+        "display": "metformin Pill",
+        "rank": 2
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1161610",
+        "display": "metformin Oral Product",
+        "rank": 3
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "583194",
+        "display": "metformin Oral Tablet [Metforming]",
+        "rank": 4
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "6809",
+        "display": "metformin",
+        "confidence": 1.0,
+        "reason": "This is the standard RxNorm ingredient concept for metformin, which covers all dosage forms and is the most reliable clinical representation for the query."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1161611",
+        "display": "metformin Pill",
+        "confidence": 0.9,
+        "reason": "Specific formulation for oral intake."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1161610",
+        "display": "metformin Oral Product",
+        "confidence": 0.9,
+        "reason": "Specific formulation for oral intake."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "583194",
+        "display": "metformin Oral Tablet [Metforming]",
+        "confidence": 0.9,
+        "reason": "Specific formulation for oral intake."
+      }
+    ],
+    "rejected_candidates": [],
+    "final_logic": {
+      "concept": "metformin exposure",
+      "condition": "current medication use"
+    },
+    "metadata": {
+      "trace_id": "t-1783449902-7172",
+      "duration_ms": 14651.73,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients treated with insulin",
+    "interpreted_meaning": {
+      "original_query": "Patients treated with insulin",
+      "clinical_entities": [
+        "insulin"
+      ],
+      "synonyms": [
+        "insulin glargine",
+        "insulin lispro",
+        "insulin aspart",
+        "Lantus",
+        "Humalog",
+        "Novolog",
+        "Levemir",
+        "Toujeo"
+      ],
+      "domain": "drug",
+      "constraint": null,
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "5856",
+        "display": "insulin",
+        "rank": 1
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "253182",
+        "display": "Insulin",
+        "rank": 2
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "5856",
+        "display": "insulin",
+        "confidence": 1.0,
+        "reason": "This is the standard RxNorm concept for insulin, matching the clinical query precisely."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "253182",
+        "display": "Insulin",
+        "confidence": 0.95,
+        "reason": "This is a valid RxNorm concept representing insulin, suitable for identifying patients treated with the drug."
+      }
+    ],
+    "rejected_candidates": [],
+    "final_logic": {
+      "concept": "insulin exposure",
+      "condition": "medication exposure"
+    },
+    "metadata": {
+      "trace_id": "t-1783449919-19116",
+      "duration_ms": 7986.18,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients on GLP-1 receptor agonists",
+    "interpreted_meaning": {
+      "original_query": "Patients on GLP-1 receptor agonists",
+      "clinical_entities": [
+        "GLP-1 receptor agonists"
+      ],
+      "synonyms": [
+        "glucagon-like peptide-1 receptor agonist",
+        "GLP-1 RA",
+        "GLP1",
+        "incretin mimetics"
+      ],
+      "domain": "drug",
+      "constraint": {
+        "operator": "in",
+        "value": [
+          "semaglutide",
+          "liraglutide",
+          "dulaglutide",
+          "exenatide",
+          "tirzepatide",
+          "lixisenatide"
+        ],
+        "unit": null
+      },
+      "status": "current",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "1440051",
+        "display": "lixisenatide",
+        "rank": 1
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1551291",
+        "display": "dulaglutide",
+        "rank": 2
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1991302",
+        "display": "semaglutide",
+        "rank": 3
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2601723",
+        "display": "tirzepatide",
+        "rank": 4
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "475968",
+        "display": "liraglutide",
+        "rank": 5
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "60548",
+        "display": "exenatide",
+        "rank": 6
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "1440051",
+        "display": "lixisenatide",
+        "confidence": 1.0,
+        "reason": "Matches the specified GLP-1 receptor agonist constraint."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1551291",
+        "display": "dulaglutide",
+        "confidence": 1.0,
+        "reason": "Matches the specified GLP-1 receptor agonist constraint."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1991302",
+        "display": "semaglutide",
+        "confidence": 1.0,
+        "reason": "Matches the specified GLP-1 receptor agonist constraint."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2601723",
+        "display": "tirzepatide",
+        "confidence": 1.0,
+        "reason": "Matches the specified GLP-1 receptor agonist constraint."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "475968",
+        "display": "liraglutide",
+        "confidence": 1.0,
+        "reason": "Matches the specified GLP-1 receptor agonist constraint."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "60548",
+        "display": "exenatide",
+        "confidence": 1.0,
+        "reason": "Matches the specified GLP-1 receptor agonist constraint."
+      }
+    ],
+    "rejected_candidates": [],
+    "final_logic": {
+      "concept": "GLP-1 receptor agonists exposure",
+      "condition": "current medication use"
+    },
+    "metadata": {
+      "trace_id": "t-1783449930-13037",
+      "duration_ms": 8476.15,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients prescribed atorvastatin",
+    "interpreted_meaning": {
+      "original_query": "Patients prescribed atorvastatin",
+      "clinical_entities": [
+        "atorvastatin"
+      ],
+      "synonyms": [
+        "Lipitor",
+        "Atorvastatin calcium"
+      ],
+      "domain": "drug",
+      "constraint": null,
+      "status": "current",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "83367",
+        "display": "atorvastatin",
+        "rank": 1
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1158285",
+        "display": "atorvastatin Pill",
+        "rank": 2
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2630759",
+        "display": "atorvastatin Oral Suspension",
+        "rank": 3
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "370621",
+        "display": "atorvastatin Oral Tablet",
+        "rank": 4
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "437783",
+        "display": "atorvastatin Oral Capsule",
+        "rank": 5
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1158284",
+        "display": "atorvastatin Oral Product",
+        "rank": 6
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2630758",
+        "display": "atorvastatin Oral Liquid Product",
+        "rank": 7
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "83367",
+        "display": "atorvastatin",
+        "confidence": 1.0,
+        "reason": "Generic ingredient level concept that covers all dosage forms of atorvastatin."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1158285",
+        "display": "atorvastatin Pill",
+        "confidence": 0.9,
+        "reason": "Direct clinical match for oral dosage form."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2630759",
+        "display": "atorvastatin Oral Suspension",
+        "confidence": 0.9,
+        "reason": "Direct clinical match for oral dosage form."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "370621",
+        "display": "atorvastatin Oral Tablet",
+        "confidence": 0.9,
+        "reason": "Direct clinical match for oral dosage form."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "437783",
+        "display": "atorvastatin Oral Capsule",
+        "confidence": 0.9,
+        "reason": "Direct clinical match for oral dosage form."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1158284",
+        "display": "atorvastatin Oral Product",
+        "confidence": 0.9,
+        "reason": "Direct clinical match for oral pharmaceutical product."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2630758",
+        "display": "atorvastatin Oral Liquid Product",
+        "confidence": 0.9,
+        "reason": "Direct clinical match for oral liquid product."
+      }
+    ],
+    "rejected_candidates": [],
+    "final_logic": {
+      "concept": "atorvastatin exposure",
+      "condition": "current medication use"
+    },
+    "metadata": {
+      "trace_id": "t-1783449942-36116",
+      "duration_ms": 24038.91,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients exposed to systemic corticosteroids",
+    "interpreted_meaning": {
+      "original_query": "Patients exposed to systemic corticosteroids",
+      "clinical_entities": [
+        "systemic corticosteroids"
+      ],
+      "synonyms": [
+        "glucocorticoids",
+        "prednisone",
+        "prednisolone",
+        "methylprednisolone",
+        "dexamethasone",
+        "hydrocortisone"
+      ],
+      "domain": "drug",
+      "constraint": {
+        "operator": "in",
+        "value": [
+          "oral",
+          "intravenous",
+          "intramuscular"
+        ],
+        "unit": null
+      },
+      "status": "any",
+      "negative_constraints": [
+        "beclomethasone",
+        "budesonide",
+        "fluticasone"
+      ]
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "6902",
+        "display": "methylprednisolone",
+        "rank": 1
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "3264",
+        "display": "dexamethasone",
+        "rank": 2
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "5492",
+        "display": "hydrocortisone",
+        "rank": 3
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "8638",
+        "display": "prednisolone",
+        "rank": 4
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "8640",
+        "display": "prednisone",
+        "rank": 5
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "22396",
+        "display": "deflazacort",
+        "rank": 6
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2669799",
+        "display": "vamorolone",
+        "rank": 7
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2878",
+        "display": "cortisone",
+        "rank": 8
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "10759",
+        "display": "triamcinolone",
+        "rank": 9
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1514",
+        "display": "betamethasone",
+        "rank": 10
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "19831",
+        "display": "budesonide",
+        "rank": 11
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1347",
+        "display": "beclomethasone",
+        "rank": 12
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "10761",
+        "display": "triamcinolone acetonide",
+        "rank": 13
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "108088",
+        "display": "alclometasone",
+        "rank": 14
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "108118",
+        "display": "mometasone",
+        "rank": 15
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1546428",
+        "display": "flunisolide anhydrous",
+        "rank": 16
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "17652",
+        "display": "amcinonide",
+        "rank": 17
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "41126",
+        "display": "fluticasone",
+        "rank": 18
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "21249",
+        "display": "clocortolone",
+        "rank": 19
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "237027",
+        "display": "loteprednol",
+        "rank": 20
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2590",
+        "display": "clobetasol",
+        "rank": 21
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "29439",
+        "display": "medrysone",
+        "rank": 22
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "3254",
+        "display": "desonide",
+        "rank": 23
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "3255",
+        "display": "desoximetasone",
+        "rank": 24
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "41208",
+        "display": "halobetasol",
+        "rank": 25
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "4461",
+        "display": "fluocinolone acetonide",
+        "rank": 26
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "4462",
+        "display": "fluocinonide",
+        "rank": 27
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "4491",
+        "display": "fluorometholone",
+        "rank": 28
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "4500",
+        "display": "flurandrenolide",
+        "rank": 29
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "5084",
+        "display": "halcinonide",
+        "rank": 30
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "91311",
+        "display": "diflorasone",
+        "rank": 31
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "22396",
+        "display": "deflazacort",
+        "confidence": 1.0,
+        "reason": "Oral systemic corticosteroid."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2669799",
+        "display": "vamorolone",
+        "confidence": 1.0,
+        "reason": "Oral systemic corticosteroid."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2878",
+        "display": "cortisone",
+        "confidence": 1.0,
+        "reason": "Available in oral and injectable forms."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "3264",
+        "display": "dexamethasone",
+        "confidence": 1.0,
+        "reason": "Available in oral and injectable forms."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "5492",
+        "display": "hydrocortisone",
+        "confidence": 1.0,
+        "reason": "Available in oral and injectable forms."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "6902",
+        "display": "methylprednisolone",
+        "confidence": 1.0,
+        "reason": "Available in oral and injectable forms."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "8638",
+        "display": "prednisolone",
+        "confidence": 1.0,
+        "reason": "Available in oral and injectable forms."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "8640",
+        "display": "prednisone",
+        "confidence": 1.0,
+        "reason": "Oral systemic corticosteroid."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "10759",
+        "display": "triamcinolone",
+        "confidence": 0.9,
+        "reason": "Available in oral and injectable (IM) forms."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1514",
+        "display": "betamethasone",
+        "confidence": 0.9,
+        "reason": "Available in injectable forms."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "19831",
+        "display": "budesonide",
+        "confidence": 0.9,
+        "reason": "Available in oral forms."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1347",
+        "display": "beclomethasone",
+        "confidence": 0.7,
+        "reason": "Systemic forms exist, though often used topically or via inhalation."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "RxNorm",
+        "code": "10761",
+        "display": "triamcinolone acetonide",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "108088",
+        "display": "alclometasone",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "108118",
+        "display": "mometasone",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1546428",
+        "display": "flunisolide anhydrous",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "17652",
+        "display": "amcinonide",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "21249",
+        "display": "clocortolone",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "237027",
+        "display": "loteprednol",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "2590",
+        "display": "clobetasol",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "29439",
+        "display": "medrysone",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "3254",
+        "display": "desonide",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "3255",
+        "display": "desoximetasone",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "41208",
+        "display": "halobetasol",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "4461",
+        "display": "fluocinolone acetonide",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "4462",
+        "display": "fluocinonide",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "4491",
+        "display": "fluorometholone",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "4500",
+        "display": "flurandrenolide",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "5084",
+        "display": "halcinonide",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "91311",
+        "display": "diflorasone",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "1347",
+        "display": "beclomethasone",
+        "reason": "Predominantly used as an inhaled (ICS) or topical steroid, not typically classified as a 'systemic corticosteroid' in a general clinical cohort sense."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "19831",
+        "display": "budesonide",
+        "reason": "Predominantly used as an inhaled (ICS) or topical steroid."
+      },
+      {
+        "vocabulary": "RxNorm",
+        "code": "41126",
+        "display": "fluticasone",
+        "reason": "Predominantly used as an inhaled (ICS) or topical steroid."
+      }
+    ],
+    "final_logic": {
+      "concept": "systemic corticosteroids exposure",
+      "condition": "medication exposure"
+    },
+    "metadata": {
+      "trace_id": "t-1783449969-21933",
+      "duration_ms": 19635.21,
+      "correction_attempts": 1,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients who had a colonoscopy",
+    "interpreted_meaning": {
+      "original_query": "Patients who had a colonoscopy",
+      "clinical_entities": [
+        "colonoscopy"
+      ],
+      "synonyms": [
+        "colonoscopy",
+        "large bowel endoscopy",
+        "colonic endoscopy",
+        "optical colonoscopy"
+      ],
+      "domain": "procedure",
+      "constraint": null,
+      "status": "prior",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "SNOMED",
+        "code": "73761001",
+        "display": "Colonoscopy",
+        "rank": 1
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "SNOMED",
+        "code": "73761001",
+        "display": "Colonoscopy",
+        "confidence": 1.0,
+        "reason": "The SNOMED code 73761001 directly maps to the procedure 'Colonoscopy' specified in the clinical intent."
+      }
+    ],
+    "rejected_candidates": [],
+    "final_logic": {
+      "concept": "colonoscopy procedure",
+      "condition": "prior procedure performed"
+    },
+    "metadata": {
+      "trace_id": "t-1783449991-39904",
+      "duration_ms": 4051.46,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with prior chemotherapy",
+    "interpreted_meaning": {
+      "original_query": "Patients with prior chemotherapy",
+      "clinical_entities": [
+        "chemotherapy"
+      ],
+      "synonyms": [
+        "antineoplastic therapy",
+        "cytotoxic chemotherapy",
+        "systemic antineoplastic regimen"
+      ],
+      "domain": "procedure",
+      "constraint": null,
+      "status": "prior",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "SNOMED",
+        "code": "367336001",
+        "display": "Chemotherapy",
+        "rank": 1
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "Z51.11",
+        "display": "Encounter for antineoplastic chemotherapy",
+        "rank": 2
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "SNOMED",
+        "code": "367336001",
+        "display": "Chemotherapy",
+        "confidence": 0.95,
+        "reason": "This is a direct procedure concept representing the administration of chemotherapy, consistent with the patient cohort query."
+      },
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "Z51.11",
+        "display": "Encounter for antineoplastic chemotherapy",
+        "confidence": 0.9,
+        "reason": "This code identifies an encounter specifically for the provision of chemotherapy, which effectively identifies patients who have undergone the procedure."
+      }
+    ],
+    "rejected_candidates": [],
+    "final_logic": {
+      "concept": "chemotherapy procedure",
+      "condition": "prior procedure performed"
+    },
+    "metadata": {
+      "trace_id": "t-1783449998-59592",
+      "duration_ms": 3561.8,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with ECOG performance status 0 or 1",
+    "interpreted_meaning": {
+      "original_query": "Patients with ECOG performance status 0 or 1",
+      "clinical_entities": [
+        "ECOG performance status"
+      ],
+      "synonyms": [
+        "ECOG",
+        "Eastern Cooperative Oncology Group performance status",
+        "Zubrod score",
+        "WHO performance status"
+      ],
+      "domain": "measurement",
+      "constraint": {
+        "operator": "in",
+        "value": [
+          0,
+          1
+        ],
+        "unit": null
+      },
+      "status": "any",
+      "negative_constraints": [
+        "42800-3",
+        "89262-0"
+      ]
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "89247-1",
+        "display": "ECOG Performance Status",
+        "rank": 1
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "89262-0",
+        "display": "ECOG Perform Status Imp",
+        "rank": 2
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "42800-3",
+        "display": "Deprecated ECOG perf status grade Observ",
+        "rank": 3
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "89246-3",
+        "display": "Performance status panel",
+        "rank": 4
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "89247-1",
+        "display": "ECOG Performance Status",
+        "confidence": 1.0,
+        "reason": "This is the standard LOINC code for capturing ECOG performance status observations, which are mapped to values 0-5."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "LOINC",
+        "code": "89246-3",
+        "display": "Performance status panel",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "89262-0",
+        "display": "ECOG Perform Status Imp",
+        "reason": "This code represents an impression or clinical note rather than a standardized quantitative measurement observation."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "42800-3",
+        "display": "Deprecated ECOG perf status grade Observ",
+        "reason": "This code is explicitly marked as deprecated and should not be used for current clinical audit or data retrieval."
+      }
+    ],
+    "final_logic": {
+      "concept": "ECOG performance status measurement",
+      "condition": "value in [0, 1]"
+    },
+    "metadata": {
+      "trace_id": "t-1783450005-1209",
+      "duration_ms": 23819.7,
+      "correction_attempts": 1,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with BMI above 30",
+    "interpreted_meaning": {
+      "original_query": "Patients with BMI above 30",
+      "clinical_entities": [
+        "Body Mass Index"
+      ],
+      "synonyms": [
+        "BMI",
+        "body mass index"
+      ],
+      "domain": "measurement",
+      "constraint": {
+        "operator": ">",
+        "value": 30,
+        "unit": "kg/m\u00b2"
+      },
+      "status": "any",
+      "negative_constraints": []
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "39156-5",
+        "display": "Body mass index",
+        "rank": 1
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "97057-4",
+        "display": "Body mass index",
+        "rank": 2
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "41909-3",
+        "display": "Deprecated BMI",
+        "rank": 3
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "59575-1",
+        "display": "BMI Prctl Per Age",
+        "rank": 4
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "89270-3",
+        "display": "BMI Est",
+        "rank": 5
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "59576-9",
+        "display": "BMI Prctl Per age+sex",
+        "rank": 6
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "59574-4",
+        "display": "BMI Prctl",
+        "rank": 7
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "LOINC",
+        "code": "39156-5",
+        "display": "Body mass index",
+        "confidence": 1.0,
+        "reason": "This is the standard LOINC code used to document and retrieve Body Mass Index (BMI) measurements."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "97057-4",
+        "display": "Body mass index",
+        "confidence": 0.9,
+        "reason": "This is a valid LOINC code for Body Mass Index, specifically representing the latest observation or relevant measurement for clinical assessment."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "LOINC",
+        "code": "41909-3",
+        "display": "Deprecated BMI",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "59575-1",
+        "display": "BMI Prctl Per Age",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "89270-3",
+        "display": "BMI Est",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "59576-9",
+        "display": "BMI Prctl Per age+sex",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "59574-4",
+        "display": "BMI Prctl",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      }
+    ],
+    "final_logic": {
+      "concept": "Body Mass Index measurement",
+      "condition": "value > 30 kg/m\u00b2"
+    },
+    "metadata": {
+      "trace_id": "t-1783450032-62223",
+      "duration_ms": 6200.54,
+      "correction_attempts": 0,
+      "status": "success"
+    }
+  },
+  {
+    "query": "Patients with a positive pregnancy test",
+    "interpreted_meaning": {
+      "original_query": "Patients with a positive pregnancy test",
+      "clinical_entities": [
+        "positive pregnancy test",
+        "hCG positive result"
+      ],
+      "synonyms": [
+        "positive serum hCG",
+        "positive urine pregnancy test",
+        "positive uPreg",
+        "positive sPreg",
+        "pregnant",
+        "pregnancy finding positive"
+      ],
+      "domain": "condition",
+      "constraint": {
+        "operator": "==",
+        "value": "positive",
+        "unit": null
+      },
+      "status": "any",
+      "negative_constraints": [
+        "14302-4",
+        "2106-3",
+        "66563-8"
+      ]
+    },
+    "candidate_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "Z32.01",
+        "display": "Encounter for pregnancy test, result positive",
+        "rank": 1
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "14302-4",
+        "display": "Pregnancy test urine",
+        "rank": 2
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "2106-3",
+        "display": "Pregnancy test serum",
+        "rank": 3
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "66563-8",
+        "display": "Pregnancy test result PhenX",
+        "rank": 4
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "66562-0",
+        "display": "Pregnancy test required PhenX",
+        "rank": 5
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "85674-0",
+        "display": "Date serology test pre pregnancy Mother",
+        "rank": 6
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "85675-7",
+        "display": "Serologic tx result pre pregnancy Mother",
+        "rank": 7
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "75177-6",
+        "display": "Indicate during pregnancy most recent treponemal test type",
+        "rank": 8
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "75178-4",
+        "display": "Indicate during pregnancy most recent treponemal test result",
+        "rank": 9
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "75175-0",
+        "display": "Indicate during pregnancy and delivery first treponemal test result",
+        "rank": 10
+      }
+    ],
+    "selected_codes": [
+      {
+        "vocabulary": "ICD-10-CM",
+        "code": "Z32.01",
+        "display": "Encounter for pregnancy test, result positive",
+        "confidence": 1.0,
+        "reason": "The code explicitly denotes an encounter where a pregnancy test was performed and the result was positive, matching the clinical intent and constraint perfectly."
+      }
+    ],
+    "rejected_candidates": [
+      {
+        "vocabulary": "LOINC",
+        "code": "66562-0",
+        "display": "Pregnancy test required PhenX",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "85674-0",
+        "display": "Date serology test pre pregnancy Mother",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "85675-7",
+        "display": "Serologic tx result pre pregnancy Mother",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "75177-6",
+        "display": "Indicate during pregnancy most recent treponemal test type",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "75178-4",
+        "display": "Indicate during pregnancy most recent treponemal test result",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "75175-0",
+        "display": "Indicate during pregnancy and delivery first treponemal test result",
+        "reason": "Filtered out during search refinement (too general or unrelated)."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "14302-4",
+        "display": "Pregnancy test urine",
+        "reason": "This code identifies the test performed, but does not indicate the positive result required by the constraint."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "2106-3",
+        "display": "Pregnancy test serum",
+        "reason": "This code identifies the test performed, but does not indicate the positive result required by the constraint."
+      },
+      {
+        "vocabulary": "LOINC",
+        "code": "66563-8",
+        "display": "Pregnancy test result PhenX",
+        "reason": "This is a generic PhenX protocol code and does not represent a specific clinical result of positive."
+      }
+    ],
+    "final_logic": {
+      "concept": "positive pregnancy test diagnosis",
+      "condition": "diagnosis present"
+    },
+    "metadata": {
+      "trace_id": "t-1783450041-53894",
+      "duration_ms": 20360.96,
+      "correction_attempts": 1,
+      "status": "success"
+    }
+  }
+]
