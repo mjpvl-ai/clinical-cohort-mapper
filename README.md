@@ -27,23 +27,93 @@ All data sources are **publicly available** — no proprietary code systems are 
 
 ## Architecture
 
+```mermaid
+graph TB
+    subgraph Input
+        Q["🧑‍⚕️ Free-text Clinical Query"]
+    end
+
+    subgraph Orchestrator["LangGraph Orchestrator (engine.py)"]
+        direction TB
+        P["🗣️ Medical Linguist<br/><i>parser.py</i><br/>Intent extraction · Synonym expansion"]
+        R["🔎 Medical Informatician<br/><i>retriever.py</i><br/>Candidate retrieval · Ranking"]
+        A["🛡️ Clinical Auditor<br/><i>auditor.py</i><br/>Validation · Confidence scoring"]
+
+        P -->|"ClinicalIntent<br/>(domain, entities, constraints)"| R
+        R -->|"Ranked CandidateCodes"| A
+        A -- "❌ Rejected<br/>(critique + exclusions)" --> P
+    end
+
+    subgraph APIs["Public Terminology APIs"]
+        LOINC["LOINC<br/><i>NLM Clinical Tables</i>"]
+        ICD["ICD-10-CM<br/><i>NLM Clinical Tables</i>"]
+        RX["RxNorm / RxClass<br/><i>NIH REST API</i>"]
+        DB["SQLite Vocab Cache<br/><i>SNOMED · Hierarchies</i>"]
+    end
+
+    subgraph LLM["LLM Backend"]
+        GEM["Gemini 3.1 Flash Lite<br/><i>Primary</i>"]
+        OLL["Qwen3 0.6B via Ollama<br/><i>Local Fallback</i>"]
+    end
+
+    subgraph Observability["OpenTelemetry"]
+        TEL["telemetry.log<br/><i>Structured JSON spans</i>"]
+        OTLP["OTLP Collector<br/><i>Jaeger · Zipkin</i>"]
+    end
+
+    Q --> P
+    R --> LOINC & ICD & RX & DB
+    P & A -.->|"LLM calls"| GEM
+    GEM -.->|"fallback"| OLL
+    A -->|"✅ Approved"| OUT["📋 MappingResult JSON"]
+    Orchestrator -.->|"spans"| TEL & OTLP
+
+    style Orchestrator fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#eee
+    style APIs fill:#0f3460,stroke:#16213e,stroke-width:1px,color:#eee
+    style LLM fill:#1a1a2e,stroke:#e94560,stroke-width:1px,color:#eee
+    style Observability fill:#162447,stroke:#1f4068,stroke-width:1px,color:#eee
+    style Q fill:#e94560,stroke:#e94560,color:#fff
+    style OUT fill:#0cca4a,stroke:#0cca4a,color:#fff
 ```
-┌──────────────────────────────────────────────────┐
-│                  Orchestrator                     │
-│              (LangGraph Engine)                   │
-│                                                   │
-│  ┌───────────┐  ┌────────────┐  ┌─────────────┐  │
-│  │  Medical   │  │  Medical   │  │  Clinical   │  │
-│  │ Linguist  │→│Informatician│→│  Auditor    │  │
-│  │ (Parser)  │  │ (Retriever)│  │  (Critic)   │  │
-│  └───────────┘  └────────────┘  └──────┬──────┘  │
-│       ↑                                │         │
-│       └────── Reflexion Loop ──────────┘         │
-│              (up to 3 retries)                    │
-└──────────────────────────────────────────────────┘
-                      │
-              OpenTelemetry Spans
-              (telemetry.log / OTLP)
+
+### Reflexion Loop Detail
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Engine as Orchestrator
+    participant Parser as Medical Linguist
+    participant Retriever as Medical Informatician
+    participant Auditor as Clinical Auditor
+    participant API as Public APIs
+
+    User->>Engine: "Patients with CKD stage 3"
+    
+    rect rgb(26, 26, 46)
+    Note over Engine: Attempt 1
+    Engine->>Parser: Parse query
+    Parser-->>Engine: domain=condition, entity=CKD stage 3
+    Engine->>Retriever: Retrieve candidates
+    Retriever->>API: Query ICD-10-CM
+    API-->>Retriever: N18.9 (unspecified), N18.30, N18.31, N18.32
+    Retriever-->>Engine: Ranked candidates
+    Engine->>Auditor: Audit candidates
+    Auditor-->>Engine: ❌ REJECT N18.9 — too broad for "stage 3"
+    end
+
+    rect rgb(15, 52, 96)
+    Note over Engine: Attempt 2 (Self-Correction)
+    Engine->>Parser: Re-parse with critique (exclude N18.9)
+    Parser-->>Engine: Refined intent + exclusion rules
+    Engine->>Retriever: Retrieve with exclusions
+    Retriever->>API: Query children of N18
+    API-->>Retriever: N18.30, N18.31, N18.32
+    Retriever-->>Engine: Filtered candidates
+    Engine->>Auditor: Re-audit
+    Auditor-->>Engine: ✅ APPROVED — stage-specific codes
+    end
+
+    Engine-->>User: MappingResult JSON (N18.30, N18.31, N18.32)
 ```
 
 ## Quick Start
