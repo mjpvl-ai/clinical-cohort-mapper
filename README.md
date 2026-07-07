@@ -174,18 +174,46 @@ Each query produces a structured JSON result:
 }
 ```
 
-## Observability (OpenTelemetry)
+## Observability (Grafana + Tempo)
 
-The pipeline is instrumented with the **OpenTelemetry** standard. Each query execution produces nested spans:
+The pipeline is instrumented with the **OpenTelemetry** standard. Traces are visualized in **Grafana** with **Tempo** as the trace backend.
+
+### Start the Observability Stack
+
+```bash
+docker compose up -d
+```
+
+This starts:
+- **Grafana** → [http://localhost:3000](http://localhost:3000) (no login required)
+- **Tempo** → receives OTLP traces on ports `4317` (gRPC) / `4318` (HTTP)
+
+### Run a Query
+
+```bash
+python run.py --query "Patients with HbA1c above 7%"
+```
+
+The mapper **auto-detects** Tempo on `localhost:4318` and exports traces via OTLP. No env vars needed.
+
+### View Traces in Grafana
+
+1. Open [http://localhost:3000/explore](http://localhost:3000/explore)
+2. Select **Tempo** as the datasource
+3. Switch to **Search** query type
+4. Set Service Name = `clinical-cohort-mapper`
+5. Click **Run query** → click a trace to see the waterfall timeline
+
+Each trace shows nested spans with clinical attributes:
 
 ```
-MapClinicalQuery
-  ├── Parser.parse_query
-  ├── TerminologyClient.retrieve
-  └── Auditor.audit
+MapClinicalQuery (clinical.query, clinical.top_code, clinical.status)
+  ├── Parser.parse_query (clinical.domain, clinical.attempt)
+  ├── TerminologyClient.retrieve (clinical.candidate_count)
+  └── Auditor.audit (clinical.is_approved, clinical.selected_count)
 ```
 
-Spans are exported to `telemetry.log` as structured JSON lines. Set `OTEL_EXPORTER_OTLP_ENDPOINT` to export to a collector (Jaeger, Zipkin, etc.).
+Spans are also logged locally to `telemetry.log` as structured JSON lines for offline analysis.
 
 ## Key Design Decisions
 
