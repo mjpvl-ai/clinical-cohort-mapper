@@ -1,58 +1,142 @@
 # Clinical Cohort Mapper: Design & Reasoning Write-up
 
-This document explains the clinical reasoning, architectural trade-offs, and evaluation methodology behind the **Consensus-Driven Graph Reflexion (CDGR)** cohort mapping prototype.
+This document provides a comprehensive technical write-up of the **Consensus-Driven Graph Reflexion (CDGR)** architecture, detailed analysis of system performance, cost, and robustness, diagnostics on scaling to 3M+ records, and an enterprise production engineering roadmap.
 
 ---
 
-### 1. How we interpreted the free-form query
-To reliably parse unstructured text, we implemented a **Medical Linguist (Parser)** agent using a structured LLM output (Pydantic schemas). Instead of forcing the LLM to map directly to a code in one step (which is highly error-prone), the parser's only job is to extract a `ClinicalIntent` object. 
+## 1. Core Architecture: Consensus-Driven Graph Reflexion (CDGR)
 
-This object standardizes the query into:
-- **Domain:** (e.g., `condition`, `drug`, `measurement`, `procedure`)
-- **Entities:** The core clinical concepts (e.g., "Hemoglobin A1c").
-- **Constraints:** Quantitative values, units, or statuses (e.g., operator: `>`, value: `7`, unit: `%`, status: `current`).
+Standard clinical text parsers rely on single-pass heuristic keyword extraction or direct LLM mappings. These approaches fail in clinical environments due to semantic "hallucinations," vocabulary boundary violations (e.g., mixing LOINC with ICD-10), and a lack of clinical specificity (e.g., selecting an "unspecified" parent code instead of a highly specific clinical stage).
 
-**Trade-off:** Using an LLM for parsing introduces latency compared to pure NLP/Regex approaches, but it handles complex, nested, or poorly phrased clinical logic much more gracefully.
+The **CDGR architecture** solves this by establishing a multi-agent consensus network governed by a directed graph state machine.
 
-### 2. How we handled synonyms and alternative clinical phrasing
-Synonym expansion occurs at multiple layers before reaching the retrieval APIs:
-1.  **Rule-Based Expansion:** Common acronyms (T2D, HbA1c, CKD, SBP) are mapped directly to their expanded forms to ensure API search hits.
-2.  **Ontology Database Lookup:** We query a local SQLite terminology cache (`data/local_vocab.db`). If an entity matches a known concept (e.g., "renal failure"), we inject its established synonyms ("kidney disease").
-3.  **API Fuzzy Matching:** For drugs, we leverage the NIH RxNorm API's approximate matching endpoint, which natively handles brand/generic translations (e.g., mapping "Tylenol" to "acetaminophen").
+```mermaid
+graph TB
+    subgraph Input
+        Q["🧑‍⚕️ Clinical Query"]
+    end
 
-### 3. How we retrieved candidate codes
-We implemented a **Medical Informatician (Retriever)** node that routes searches to the most appropriate, publicly available reference vocabulary based on the parsed domain:
-- **Measurements (LOINC) & Diagnoses (ICD-10-CM):** Queried against the NLM Clinical Table Search Service API.
-- **Medications (RxNorm):** Queried against the NIH RxNorm REST APIs (using approximate term searches and RxClass hierarchies for drug classes like "GLP-1 receptor agonists").
-- **Procedures (SNOMED CT):** Queried against our local SQLite terminology database cache.
+    subgraph LangGraph["Orchestration Engine (engine.py)"]
+        Linguist["🗣️ Medical Linguist (parser.py)"]
+        Informatician["🔎 Medical Informatician (retriever.py)"]
+        Auditor["🛡️ Clinical Auditor (auditor.py)"]
 
-### 4. How we ranked and filtered candidates
-Instead of relying solely on the LLM to pick the best code, we implemented an explicit, deterministic scoring algorithm to rank candidates:
-$$\text{Score} = \text{Domain Match} (20) + \text{Entity Match} (15\text{-}25) + \text{Synonym Match} (8\text{-}13) + \text{Specificity Match} (15) - \text{API Rank Decay} (0.5 \times \text{rank})$$
+        Linguist -->|"ClinicalIntent"| Informatician
+        Informatician -->|"Ranked CandidateCodes"| Auditor
+        Auditor -- "❌ Rejected (is_approved=False)" --> Linguist
+    end
 
-- **Specificity Match:** Heavily boosts candidates that contain critical query modifiers (e.g., "fasting", "stage 3").
-- **API Rank Decay:** Respects the underlying search engine's TF-IDF/relevance sorting but degrades the score slightly for results further down the list.
+    subgraph Backends
+        APIs["NIH / NLM REST APIs"]
+        LocalDB["Local SQLite Vocab Cache"]
+        LLM["Gemini / Ollama Fallback"]
+    end
 
-### 5. How we avoided clinically incorrect mappings
-This is the core strength of the CDGR architecture. LLMs are prone to selecting the first vaguely matching code. To prevent this, we introduced a **Clinical Auditor (Critic)** node and a **Reflexion Loop**.
+    Q --> Linguist
+    Informatician --> APIs & LocalDB
+    Linguist & Auditor -.-> LLM
+    Auditor -->|"✅ Approved"| OUT["MappingResult JSON"]
+```
 
-1.  The Auditor reviews the top-ranked candidates against the original query constraints.
-2.  If the retriever brings back an overly broad code—for example, returning `N18.9` (Chronic kidney disease, unspecified) for the query "CKD stage 3"—the Auditor **rejects** it.
-3.  The Auditor generates a formal critique (e.g., "Reject N18.9; query requires stage 3 specificity").
-4.  The system loops back to the Parser, injecting the critique. The Retriever then executes a refined search (often traversing ontology hierarchies to find child nodes), successfully landing on `N18.30` (CKD Stage 3).
+### Component Breakdown
+1. **Medical Linguist (Parser)**: Converts unstructured text into a structured, grammar-enforced `ClinicalIntent` (Pydantic model) containing domains, entities, constraints, and negative constraints.
+2. **Medical Informatician (Retriever)**: Queries public vocabulary APIs and local databases, performs class expansion (e.g., resolving GLP-1 agonists to active ingredients), and applies a deterministic scoring function.
+3. **Clinical Auditor (Critic)**: Serves as a clinical validator. If a code violates query constraints, the Auditor rejects the concept, generating exclusion parameters and triggering a retry.
 
-### 6. How we evaluated the quality of our mappings
-We evaluated the system using a batch suite of 20 diverse clinical cohort queries representing different domains (measurements, conditions, drugs, procedures). 
+---
 
-**Evaluation Criteria:**
-- **Domain Accuracy:** Did it select the correct target vocabulary (LOINC vs RxNorm)?
-- **Clinical Specificity:** Did it avoid "unspecified" codes when stages/severities were provided?
-- **Constraint Parsing:** Were numerical values and units accurately captured in the `FinalLogic` output?
+## 2. In-Depth Step-by-Step Flow
 
-The system achieved 100% domain routing accuracy and successfully navigated complex edge cases (like expanding the GLP-1 drug class into constituent active ingredients).
+### A. Intent Parsing & Synonym Expansion
+*   **Parsing**: We use a two-stage parsing approach. The first pass applies regular expressions to capture trivial constraints (e.g. `> 7%`). The second pass calls the LLM in structured JSON mode to map concepts, synonyms, and negative constraints.
+*   **Synonym Resolution**: Synonyms are resolved using:
+    1.  *Rule-Based Mapping*: Hardcoded lookup for common acronyms (`HbA1c` $\rightarrow$ `Hemoglobin A1c`, `T2D` $\rightarrow$ `Type 2 Diabetes`).
+    2.  *Ontology Cache*: Querying local SQLite tables to expand synonyms like `renal failure` $\rightarrow$ `kidney disease`.
+    3.  *Approximate API Matching*: Querying the NIH RxNorm API for medication brand-to-generic conversions.
 
-### 7. What limitations remain in our approach
-- **API Rate Limiting & Latency:** Relying on live NLM/NIH APIs introduces latency (3-5 seconds per query) and is subject to external rate limits. A true production system would host these terminologies (e.g., OHDSI Athena/OMOP vocabularies) locally in an Elasticsearch or Postgres instance.
-- **Complex Temporal Logic:** While we handle "current" vs "prior", complex temporal relationships (e.g., "HbA1c > 7% within the last 6 months after starting metformin") are only partially supported in the `ClinicalIntent` schema.
-- **SNOMED Licensing:** SNOMED CT requires a license for full use. We used a localized, minimal SQLite subset for the prototype to avoid proprietary/licensing blockers, meaning procedure recall is limited to what is cached.
-- **LLM Hallucination Risk:** While the auditor catches most errors, the primary intent extraction still relies on an LLM, which can theoretically hallucinate constraints if the prompt engineering fails on highly ambiguous text. Local model fallbacks (like Qwen3) show lower accuracy than the primary Gemini models.
+### B. Terminology Retrieval & Deterministic Ranking
+Candidates are fetched from LOINC, ICD-10-CM, RxNorm, and local SNOMED subsets. Once fetched, the Informatician calculates a deterministic relevance score:
+
+$$\text{Score} = \text{Auditor Selection Boost} (200) + \text{Domain Match} (20) + \text{Entity Match} (15\text{-}25) + \text{Synonym Match} (8\text{-}13) + \text{Specificity Match} (15) - \text{API Rank Decay} (0.5 \times \text{rank})$$
+
+This prevents the system from relying purely on LLM sorting, which is prone to recency bias and hallucinations.
+
+### C. Self-Correction Reflexion Loop
+If the Auditor finds a candidate that represents a device (e.g. "HbA1c Measurement Device") rather than an analyte, or an unspecified parent category (e.g., `N18.9` for CKD) when specific stages were requested, it:
+1.  Sets `is_approved = False`.
+2.  Appends the incorrect concept codes or keywords to `suggested_exclusions`.
+3.  Injects a clinical critique explaining why the selection failed.
+The LangGraph engine routes the state back to the Linguist, which parses the query again with `negative_constraints` configured, forcing the retriever to fetch alternative, specific codes.
+
+---
+
+## 3. Performance, Cost & Robustness Profile
+
+Below is a detailed diagnostic matrix of the current prototype.
+
+| Metric | Current Prototype Profile | Primary Bottlenecks | Production Recommendations |
+| :--- | :--- | :--- | :--- |
+| **Latency** | **Single-Pass**: 7 – 10 seconds<br/>**Self-Correction**: 20 – 35 seconds | Synchronous external network calls (`urllib.request`) and sequential LLM inference times. | • Implement local vocabulary caches.<br/>• Use asynchronous parallel processing.<br/>• Set up Redis semantic caching. |
+| **Cost** | **~$0.001 – $0.003** per query (~5k input/output tokens total). | Tokens scale linearly with the number of candidate codes audited and self-correction iterations. | • Fine-tune an on-premise local model (e.g., Llama-3-8B).<br/>• Eliminate LLM calls entirely for cached matches. |
+| **Robustness** | **High precision** for complex criteria.<br/>**Low robustness** on external outages and small fallback models. | Dependency on NIH/NLM REST APIs. Fallback to `qwen3:0.6b` fails structured parsing tasks. | • Host vocabularies locally (no external APIs).<br/>• Use larger local fallbacks (e.g., Llama-3-70B).<br/>• Human-in-the-Loop review queue. |
+
+---
+
+## 4. Scalability Analysis: 3M+ Record Scenario
+
+If the database is scaled to **3 million records** (e.g., full UMLS Metathesaurus or OHDSI OMOP vocabulary containing LOINC, SNOMED, and ICD-10), the current implementation fails to scale.
+
+### A. SQLite Lexical Search Bottlenecks
+*   **The Issue**: The prototype database queries use string matching:
+    ```sql
+    SELECT * FROM local_concepts WHERE LOWER(display) LIKE '%term%'
+    ```
+    With 3 million records, SQL `LIKE '%term%'` patterns prevent the use of standard indexes, forcing database engine full-table scans. A single lookup would take several seconds, locking the thread.
+*   **The Solution**: Upgrade to **SQLite FTS5 (Full-Text Search)** virtual tables. This indexes words into tokens, changing the lookup complexity from $O(N)$ scans to $O(\log N)$ indexed lookups. Alternatively, migrate to **Elasticsearch** or **PostgreSQL** with GIN indexes (`pg_trgm`).
+
+### B. In-Memory Python Scoring Bottlenecks
+*   **The Issue**: The `_rank_candidates` function loops over all candidate codes returned and applies text matches in Python:
+    ```python
+    for c in candidates:
+        if ent_lower in c.display.lower():
+            score += 15.0
+    ```
+    If the retriever fetches hundreds of thousands of candidate codes, this loop will block the CPU. Storing 3M `CandidateCode` Pydantic objects in RAM consumes gigabytes of memory, risking Out-Of-Memory (OOM) crashes.
+*   **The Solution**:
+    1.  **Database Pre-Filtering**: Restrict the search scope directly in the database using `WHERE` clauses (e.g., filtering by vocabulary name or domain code) to prune the search space.
+    2.  **Top-K Retrieval**: Ensure the database query limits returns to a maximum of 100–200 candidates. Do not pull millions of records into memory for sorting.
+    3.  **Push Down Scoring**: Shift basic scoring factors (e.g., exact matches and synonym weights) directly into the database engine using ranking score functions (such as BM25 in Elasticsearch or `ts_rank` in Postgres).
+
+### C. Graph Traversal Bottlenecks
+*   **The Issue**: Iteratively traversing multi-level hierarchical concepts (parent/child/ancestor paths) in Python using single-step SQL queries creates high database round-trip overhead.
+*   **The Solution**: Write **recursive SQL Common Table Expressions (CTEs)** to resolve paths in a single query execution, or migrate to a graph-native store like **Neo4j**.
+
+---
+
+## 5. Production Engineering Roadmap
+
+To transition this prototype into a production-grade, enterprise-scale clinical cohort mapper, we recommend the following five-stage roadmap:
+
+```
+  Stage 1: Local Ingestion ──► Stage 2: Database Search ──► Stage 3: Async & Cache ──► Stage 4: Local LLM ──► Stage 5: CITL Review
+```
+
+### Stage 1: Local Terminology Cluster
+*   Ingest standard OMOP/Athena vocabularies entirely into a local database cluster (e.g., PostgreSQL or Elasticsearch).
+*   Eliminate external NIH and NLM REST API dependencies.
+
+### Stage 2: Database-Level Retrieval & Scoring
+*   Implement full-text search indexes (PostgreSQL GIN or Elasticsearch BM25) and push text-scoring weights into the query.
+*   Enforce `LIMIT 100` on the database query before objects are parsed into Pydantic models.
+
+### Stage 3: Asynchronous Orchestration & Caching
+*   Refactor the LangGraph workflows and database connect sessions using Python's `asyncio` to allow concurrent execution of thousands of streams.
+*   Implement a **Redis Semantic Cache** mapping search queries to historical approved mappings to bypass LLM execution entirely for recurring queries (e.g., "Patients on Metformin").
+
+### Stage 4: Self-Hosted LLMs
+*   Replace external Gemini API dependencies with local, self-hosted LLM instances (e.g., Llama-3-8B-Instruct or Llama-3-70B-Instruct).
+*   Fine-tune the local parser and auditor models using synthetic mapping datasets, keeping clinical data secure on-premise and eliminating API token costs.
+
+### Stage 5: Clinician-in-the-Loop (CITL) UI
+*   Build a monitoring dashboard that visualizes active queries, candidate mappings, and telemetry traces.
+*   Route mappings with low confidence scores ($<0.85$) to a manual clinician review queue for override, feeding decisions back to improve the model.

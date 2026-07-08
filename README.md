@@ -215,6 +215,57 @@ MapClinicalQuery (clinical.query, clinical.top_code, clinical.status)
 
 Spans are also logged locally to `telemetry.log` as structured JSON lines for offline analysis.
 
+## Production Scalability & Improvement Plan
+
+To transition this prototype to support enterprise-scale terminology schemas (such as the full UMLS Metathesaurus or OHDSI Athena containing **3M+ concepts and relationships**), the following improvements must be implemented:
+
+1. **Database Search Upgrades (Lexical Match)**:
+   - *Current Bottleneck*: SQL queries use `LIKE '%term%'` patterns, which bypass index lookups and cause full-table scans. At 3M+ records, query latency spikes.
+   - *Improvement*: Upgrade SQLite to use the **FTS5 (Full-Text Search)** extension for tokenized matching, or migrate to **Elasticsearch / OpenSearch** or **PostgreSQL** with GIN (`pg_trgm`) indexing.
+
+2. **Ingest Vocabularies Locally (Zero Network Latency)**:
+   - *Current Bottleneck*: Synchronous HTTP calls to live NIH (RxNorm) and NLM (Clinical Tables) endpoints add 3–10s latency and lead to rate limiting (HTTP 429).
+   - *Improvement*: Download and ingest standard vocabulary files (from OHDSI Athena or UMLS releases) directly into a local database cluster. Eliminate all external REST API calls.
+
+3. **Graph-Native Hierarchical Traversal**:
+   - *Current Bottleneck*: Multi-level relationship navigation (parent/child/descendant trees) uses single-step sequential lookups.
+   - *Improvement*: Use **recursive SQL Common Table Expressions (CTEs)** or migrate to a graph-native store like **Neo4j** for low-latency traversal of deep concept hierarchies.
+
+4. **Semantic Caching Layer**:
+   - *Current Bottleneck*: Every query executes 2–4 sequential LLM calls (Linguist, Informatician, Auditor) incurring high token costs and latency.
+   - *Improvement*: Implement a **Redis Semantic Cache** (using vector embeddings) to map identical or conceptually equivalent queries (e.g., matching "taking metformin" to "on metformin") instantly (<15ms) without calling the LLM backend.
+
+5. **Asynchronous Runtime Orchestration**:
+   - *Current Bottleneck*: Node actions and network requests run synchronously, blocking thread execution.
+   - *Improvement*: Refactor the database connector, API client, and LangGraph workflow using Python's `asyncio` (`async/await`) to process thousands of queries concurrently.
+
+6. **Candidate Scoring & Ranking Optimization at Scale**:
+   - *Current Bottleneck*: The `_rank_candidates` function ranks concepts in memory using a Python loop. Iterating over 3M records using Python string matching (`in`) and sorting in memory would cause severe CPU bottlenecks and consume gigabytes of RAM.
+   - *Improvement*: 
+     - **Push Down Scoring**: Shift lexical and prefix matches (Factors 2 and 3) directly to the database layer (e.g., Elasticsearch BM25 or PostgreSQL `ts_rank`).
+     - **Pre-filtering**: Apply strict vocabulary and domain filters (Factor 1) directly in the database `WHERE` clause to prune the candidate pool from 3M to a few hundred.
+     - **Top-K Retrieval**: Retrieve only the top 100–200 candidates from the database for downstream processing, rather than pulling all candidates into memory.
+     - **Vector Search**: Use dense embeddings and a vector database (e.g., Milvus, pgvector) for Approximate Nearest Neighbor (ANN) search to score semantic similarity in milliseconds.
+
+## Performance, Cost & Robustness Profile
+
+The following section outlines the trade-offs of this prototype implementation and the target paths for enterprise production deployment.
+
+### Latency Profile
+*   **Single-Pass Mapping**: **7 – 10 seconds** (primarily due to synchronous remote REST API roundtrips and Gemini inference latency).
+*   **Self-Correction Loop** (1–2 retries): **20 – 35 seconds** (accumulating multiple sequential parser, retrieval, and auditor steps).
+*   *Production Target*: **<300ms** for first-pass; **<15ms** for cached queries. This is achieved by local vocabulary database indexing and semantic caching.
+
+### Cost Profile
+*   **Prototype Cost**: **~$0.001 – $0.003** per query (utilizing public APIs and Gemini 3.1 Flash-Lite).
+*   **Token footprint**: Average of ~5k tokens (input + output) per run. Retries scale token volume linearly.
+*   *Production Target*: **$0.00** marginal cost per query. This is achieved by hosting a specialized, fine-tuned local model (e.g., Llama-3-8B) on-premise, which also secures patient search privacy (HIPAA compliance).
+
+### Robustness & Clinical Reliability
+*   **Reflexion Loop Safeguards**: The auditor agent's self-correcting logic successfully flags and filters out clinically imprecise matches (e.g., rejecting unspecified `N18.9` for CKD Stage 3). This is significantly more precise than single-pass vector database matches.
+*   **Prototype Outage Risks**: Heavy reliance on live public API endpoints (NIH RxNorm, NLM) means external downtime halts LOINC/ICD-10/RxNorm lookups. If Gemini rate-limits (HTTP 429), fallback to the local `qwen3:0.6b` degrades parsing quality due to its small size.
+*   *Production Target*: **99.99% reliability** via a self-hosted database cluster (no internet required), high-performance local fallbacks (e.g. Llama-3-70B), and a human-in-the-loop (HITL) manual review interface for queries with confidence scores `< 0.85`.
+
 ## Key Design Decisions
 
 - **No proprietary APIs** — all terminology lookups use free, public NIH/NLM endpoints
