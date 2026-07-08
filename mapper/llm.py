@@ -44,63 +44,88 @@ def get_local_model():
             logger.warning(f"Failed to load local GGUF model: {e}")
     return None
 
+def call_ollama(prompt: str, json_mode: bool = False) -> str:
+    """Helper to query local qwen3:0.6b via Ollama."""
+    import urllib.request
+    try:
+        with urllib.request.urlopen("http://localhost:11434", timeout=0.5) as r:
+            pass
+    except Exception:
+        raise RuntimeError("Ollama service is not running locally.")
+        
+    import ollama
+    response = ollama.chat(
+        model='qwen3:0.6b',
+        messages=[{'role': 'user', 'content': prompt}],
+        format='json' if json_mode else None
+    )
+    return response['message']['content']
+
 def call_llm(prompt: str, json_mode: bool = False) -> str:
     """Queries Gemini API with fallbacks, falling back to local GGUF MedGemma or Ollama."""
-    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    # Check if we should bypass Gemini API and force local model
+    force_local = os.environ.get("USE_LOCAL_LLM", "").lower() in ("true", "1")
     
+    if force_local:
+        local_model = get_local_model()
+        if local_model:
+            try:
+                logger.info("Using local MedGemma GGUF model (forced)...")
+                response = local_model(
+                    prompt,
+                    max_tokens=512,
+                    temperature=0.1,
+                    response_format={"type": "json_object"} if json_mode else None
+                )
+                return response["choices"][0]["text"]
+            except Exception as e:
+                logger.warning(f"Local MedGemma call failed: {e}")
+        try:
+            return call_ollama(prompt, json_mode)
+        except Exception as e:
+            logger.error(f"Fallback to local qwen3:0.6b failed: {e}")
+            raise e
+
+    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if api_key:
         import time
         import urllib.error
         
-        models = ["gemini-3.1-flash-lite", "gemini-flash-latest", "gemini-2.0-flash-lite"]
-        for model in models:
-            for retry_attempt in range(3):
-                try:
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-                    
-                    payload = {
-                        "contents": [
+        # We try only the primary model. If it hits 429/503 or fails, we immediately 
+        # fall back to local models instead of spending minutes retrying.
+        model = "gemini-3.1-flash-lite"
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            payload = {
+                "contents": [
+                    {
+                        "parts": [
                             {
-                                "parts": [
-                                    {
-                                        "text": prompt
-                                    }
-                                ]
+                                "text": prompt
                             }
                         ]
                     }
-                    
-                    if json_mode:
-                        payload["generationConfig"] = {
-                            "responseMimeType": "application/json"
-                        }
-                        
-                    data = json.dumps(payload).encode("utf-8")
-                    
-                    req = urllib.request.Request(
-                        url,
-                        data=data,
-                        headers={"Content-Type": "application/json"}
-                    )
-                    
-                    # Use a fast timeout to fall back quickly if a model is overloaded
-                    with urllib.request.urlopen(req, timeout=8) as response:
-                        res_data = json.loads(response.read().decode("utf-8"))
-                        
-                    content = res_data["candidates"][0]["content"]["parts"][0]["text"]
-                    return content
-                except urllib.error.HTTPError as he:
-                    if he.code in [429, 503]:
-                        wait_time = (retry_attempt + 1) * 3
-                        logger.warning(f"Gemini API rate limited/overloaded ({he.code}) for {model}. Waiting {wait_time}s...")
-                        time.sleep(wait_time)
-                        continue
-                    else:
-                        logger.warning(f"Failed to query Gemini model {model} due to HTTP {he.code}: {he}")
-                        break
-                except Exception as e:
-                    logger.warning(f"Failed to query Gemini model {model}: {e}")
-                    break
+                ]
+            }
+            if json_mode:
+                payload["generationConfig"] = {
+                    "responseMimeType": "application/json"
+                }
+                
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                url,
+                data=data,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            with urllib.request.urlopen(req, timeout=5) as response:
+                res_data = json.loads(response.read().decode("utf-8"))
+                
+            content = res_data["candidates"][0]["content"]["parts"][0]["text"]
+            return content
+        except Exception as e:
+            logger.warning(f"Gemini API call failed ({e}). Falling back immediately to local options.")
                     
     # Fallback 1: Local MedGemma GGUF (Second priority)
     local_model = get_local_model()
@@ -119,21 +144,7 @@ def call_llm(prompt: str, json_mode: bool = False) -> str:
 
     # Fallback 2: Local qwen3:0.6b model via Ollama
     try:
-        # Quick check if Ollama port is listening to avoid hanging
-        import urllib.request
-        try:
-            with urllib.request.urlopen("http://localhost:11434", timeout=0.5) as r:
-                pass
-        except Exception:
-            raise RuntimeError("Ollama service is not running locally.")
-            
-        import ollama
-        response = ollama.chat(
-            model='qwen3:0.6b',
-            messages=[{'role': 'user', 'content': prompt}],
-            format='json' if json_mode else None
-        )
-        return response['message']['content']
+        return call_ollama(prompt, json_mode)
     except Exception as e:
         logger.error(f"Fallback to local qwen3:0.6b failed: {e}")
         raise e
