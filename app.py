@@ -18,7 +18,7 @@ from mapper.telemetry import init_telemetry, shutdown_telemetry, get_tracer
 # Import OpenTelemetry W3C Trace Context Propagator
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
-from a2a.types import AgentCard, AgentSkill, AgentInterface, AgentCapabilities
+from a2a.types import AgentCard, AgentSkill, AgentInterface, AgentCapabilities, AgentProvider
 from a2a.server.routes import add_a2a_routes_to_fastapi, create_agent_card_routes
 
 # Initialize agents globally
@@ -48,6 +48,12 @@ agent_card = AgentCard(
     description="Exposes a consensus-driven multi-agent clinical cohort query mapping engine that transforms natural language patient criteria into standardized terminologies.",
     version="1.0.0",
     documentation_url="https://github.com/jayaprakash/clinical-cohort-mapper",
+    provider=AgentProvider(
+        organization="Srotas Health",
+        url="https://srotas.ai"
+    ),
+    default_input_modes=["text/plain", "application/json"],
+    default_output_modes=["application/json"],
     supported_interfaces=[
         AgentInterface(
             url="/api/v1/map-cohort",
@@ -75,9 +81,20 @@ agent_card = AgentCard(
             id="concept-mapping",
             name="Clinical Concept Mapping",
             description="Translates natural language patient criteria to standard clinical codes (LOINC, RxNorm, SNOMED, ICD-10-CM)."
+        ),
+        AgentSkill(
+            id="linguistic-intent-parsing",
+            name="Medical Linguistic Intent Parsing",
+            description="Extracts clinical entities, constraints, operators, units, and synonyms from unstructured patient selection criteria."
+        ),
+        AgentSkill(
+            id="consensus-driven-auditing",
+            name="Consensus-Driven Cohort Auditing",
+            description="Validates candidate codes against clinical intent and domain specificities using iterative critique-feedback loops."
         )
     ],
     capabilities=AgentCapabilities(
+        extended_agent_card=True,
         streaming=False,
         push_notifications=False
     )
@@ -85,6 +102,7 @@ agent_card = AgentCard(
 
 # Register the Agent Card routes using the official A2A SDK
 add_a2a_routes_to_fastapi(app, agent_card_routes=create_agent_card_routes(agent_card))
+
 
 # Request schemas for Agent Endpoints
 class LinguistRequest(BaseModel):
