@@ -131,7 +131,7 @@ git clone https://github.com/mjpvl-ai/clinical-cohort-mapper.git
 cd clinical-cohort-mapper
 
 # Create virtual environment and install dependencies
-uv venv && uv pip install pydantic langgraph opentelemetry-api opentelemetry-sdk
+uv venv && uv pip install pydantic langgraph opentelemetry-api opentelemetry-sdk fastapi uvicorn httpx a2a-sdk
 
 # Configure your Gemini API key
 echo 'GEMINI_API_KEY=your_key_here' > .env
