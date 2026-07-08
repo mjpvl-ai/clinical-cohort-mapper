@@ -45,7 +45,7 @@ def get_local_model():
     return None
 
 def call_ollama(prompt: str, json_mode: bool = False) -> str:
-    """Helper to query qwen3:0.6b via Ollama (supports custom OLLAMA_HOST)."""
+    """Helper to query Ollama (supports custom OLLAMA_HOST/OLLAMA_MODEL)."""
     import urllib.request
     ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
     # Ensure scheme is present
@@ -63,8 +63,9 @@ def call_ollama(prompt: str, json_mode: bool = False) -> str:
         
     import ollama
     client = ollama.Client(host=ollama_url)
+    ollama_model = os.environ.get("OLLAMA_MODEL", "qwen3.5:0.8b")
     response = client.chat(
-        model='qwen3:0.6b',
+        model=ollama_model,
         messages=[{'role': 'user', 'content': prompt}],
         format='json' if json_mode else None
     )
