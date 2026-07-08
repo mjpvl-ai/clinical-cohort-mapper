@@ -16,24 +16,28 @@ This document details the engineering roadmap, performance profiling, scalabilit
 
 ## Extending to Proprietary Vocabularies
 
-When adapting to support an additional proprietary clinical vocabulary containing Code IDs, Display names, Domains, Synonyms, Hierarchy, and Mapping relations:
+When adapting to support an additional proprietary clinical vocabulary containing Code IDs, Display names, Domains, Synonyms, Hierarchy (parent/child relationships), and Mappings to public vocabularies, we must design the ingestion and retrieval flow to preserve **both high recall and high precision**:
 
-1. **Schema Ingestion & Indexing**: Ingest the proprietary database into a standard representation storing mappings to standard public codes:
-    ```json
-    {
-      "code_id": "PROP_90210",
-      "display_name": "HbA1c level measurement",
-      "domain": "measurement",
-      "synonyms": ["A1c level test", "glycated hemoglobin"],
-      "parents": ["PROP_8888"],
-      "mappings": [{ "vocabulary": "LOINC", "code": "4548-4" }]
-    }
-    ```
-2. **Hybrid Ingestion**: Add the display names and synonyms into the lexical FTS5 indexes and create embeddings for semantic search.
-3. **Retrieval Resolution**:
-   - **Direct Search**: Retrieve candidates directly from proprietary terms.
-   - **Bridged Search**: If a query matches standard public codes (e.g. LOINC `4548-4`), query the relationship table to map the standard code to corresponding proprietary IDs.
-4. **Precision Check**: Feed parent/child lineage into the Auditor to verify exact alignment with the query's clinical constraints.
+### 1. Database Schema & Indexing Adaptation
+We ingest the proprietary vocabulary into our relational store using a structured schema:
+*   `proprietary_concepts`: Maps `code_id`, `display_name`, and `domain` (routed to standard categories: measurement, condition, drug, procedure, observation).
+*   `proprietary_synonyms`: A child table containing text alternatives for each `code_id`.
+*   `proprietary_hierarchy`: A self-referential closure table mapping ancestral paths (`parent_code_id`, `child_code_id`, `distance`).
+*   `proprietary_public_mappings`: A bridge table linking `proprietary_code_id` to public concept codes (`vocabulary`, `code`).
+
+To support fast lookup, we index `display_name` and `synonyms` using SQLite FTS5 (Full-Text Search) and generate semantic embeddings for semantic search.
+
+### 2. Maintaining High Recall
+To guarantee we fetch all relevant candidate concepts, our `MedicalInformatician` (Retriever) implements a two-pronged search strategy:
+*   **Lexical & Semantic Match Expansion**: The search query is matched against the proprietary `display_name` and `synonyms` index. Any synonyms linked to the query are extracted, boosting candidates that match clinical acronyms or variants.
+*   **Bridged Search**: If the user query is mapped to a public vocabulary code (e.g. LOINC `4548-4` for HbA1c), the retriever queries the `proprietary_public_mappings` bridge table. It immediately resolves and retrieves any corresponding proprietary `code_id`, resolving terminology mismatch gaps.
+*   **Descendant Class Expansion**: Using the `proprietary_hierarchy` table, if a matched concept has descendants (child concepts), all children are recursively fetched to ensure sub-types are included in the recall pool.
+
+### 3. Maintaining High Precision
+To filter out false positives and ensure the final mapping is strictly correct:
+*   **Domain/Category Enforcement**: Candidates are automatically pre-filtered in the SQL query by the parser-extracted `domain` (e.g., measurement vs drug), immediately pruning cross-domain false positives.
+*   **Ancestral Hierarchy Auditing**: The `ClinicalAuditor` evaluates the lineage of the candidates. By checking the parent/child hierarchy, the Auditor detects if a code is overly broad (e.g. a parent concept like "unspecified renal disease") when the query specified details (e.g. "stage 3"). If so, it rejects the code, triggers the reflexion loop, and sets a negative constraint to target specific child codes.
+*   **Bridge Mapping Consensus Verification**: For mappings resolved via public vocabularies, the Auditor verifies that the display name and semantics of the resolved proprietary code match the clinical intent of the public code, eliminating LLM hallucinations.
 
 ---
 

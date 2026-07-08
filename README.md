@@ -19,7 +19,7 @@ It serves as a production-grade Agent-to-Agent (A2A) microservice that parses cl
 
 For the clinical cohort mapping assessment, the required deliverables are organized as follows:
 
-- 📝 **Technical Write-up:** See **[WRITEUP.md](WRITEUP.md)** for design decisions, A2A architecture, scaling analysis, and the production roadmap (includes the explicit **Evaluation Rubric Alignment Matrix** in Section 8).
+- 📝 **Technical Write-up:** See **[WRITEUP.md](WRITEUP.md)** for design decisions, A2A architecture, scaling analysis, and the production roadmap (includes the **Final Discussion Question** on proprietary vocabularies in Section 8 and the **Evaluation Rubric Alignment Matrix** in Section 9).
 - ⚙️ **Working Prototype:** A command-line script is provided in `run.py`, and a FastAPI microservice application is provided in `app.py`.
 - 📋 **Instructions to Run:** See the [Quick Start](#quick-start) section below for installation, configuration, and execution instructions.
 - 📁 **Structured Query Results:** The output mapping payloads for all 20 sample queries are stored in **[results.json](results.json)**.

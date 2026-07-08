@@ -297,7 +297,34 @@ Rather than writing custom API wrappers for every external medical registry, age
 
 ---
 
-## 8. Evaluation Rubric Alignment Matrix
+## 8. Final Discussion: Supporting Proprietary Vocabularies
+
+This section explains how our system would adapt to support an additional proprietary clinical vocabulary containing Code IDs, Display names, Domains/categories, Synonyms, Parent/child relationships, and Mapping to public vocabularies, while maintaining both **high recall** and **high precision**.
+
+### A. Database Schema & Indexing Adaptation
+We ingest the proprietary vocabulary into our relational store (SQLite locally, or PostgreSQL in production) using a structured schema:
+*   `proprietary_concepts`: Maps `code_id`, `display_name`, and `domain` (routed to standard categories: measurement, condition, drug, procedure, observation).
+*   `proprietary_synonyms`: A child table containing text alternatives for each `code_id`.
+*   `proprietary_hierarchy`: A self-referential closure table mapping ancestral paths (`parent_code_id`, `child_code_id`, `distance`).
+*   `proprietary_public_mappings`: A bridge table linking `proprietary_code_id` to public concept codes (`vocabulary`, `code`).
+
+To support fast lookup, we index `display_name` and `synonyms` using SQLite FTS5 (Full-Text Search) and generate semantic embeddings for semantic search.
+
+### B. Maintaining High Recall
+To guarantee we fetch all relevant candidate concepts, our `MedicalInformatician` (Retriever) implements a two-pronged search strategy:
+1.  **Lexical & Semantic Match Expansion**: The search query is matched against the proprietary `display_name` and `synonyms` index. Any synonyms linked to the query are extracted, boosting candidates that match clinical acronyms or variants.
+2.  **Bridged Search**: If the user query is mapped to a public vocabulary code (e.g. LOINC `4548-4` for HbA1c), the retriever queries the `proprietary_public_mappings` bridge table. It immediately resolves and retrieves any corresponding proprietary `code_id`, resolving terminology mismatch gaps.
+3.  **Descendant Class Expansion**: Using the `proprietary_hierarchy` table, if a matched concept has descendants (child concepts), all children are recursively fetched to ensure sub-types are included in the recall pool.
+
+### C. Maintaining High Precision
+To filter out false positives and ensure the final mapping is strictly correct:
+1.  **Domain/Category Enforcement**: Candidates are automatically pre-filtered in the SQL query by the parser-extracted `domain` (e.g., measurement vs drug), immediately pruning cross-domain false positives.
+2.  **Ancestral Hierarchy Auditing**: The `ClinicalAuditor` evaluates the lineage of the candidates. By checking the parent/child hierarchy, the Auditor detects if a code is overly broad (e.g. a parent concept like "unspecified renal disease") when the query specified details (e.g. "stage 3"). If so, it rejects the code, triggers the reflexion loop, and sets a negative constraint to target specific child codes.
+3.  **Bridge Mapping Consensus Verification**: For mappings resolved via public vocabularies, the Auditor verifies that the display name and semantics of the resolved proprietary code match the clinical intent of the public code, eliminating LLM hallucinations.
+
+---
+
+## 9. Evaluation Rubric Alignment Matrix
 
 This section maps our system's architectural design directly to the evaluation rubric criteria:
 
@@ -311,4 +338,5 @@ This section maps our system's architectural design directly to the evaluation r
 | **Explainability** | Captures and persists the explicit logical justification for every selected and rejected code in the final output. | Saves reasons inside `selected_codes[].reason` and `rejected_candidates[].reason` fields in the `MappingResult` JSON schema. |
 | **Evaluation design** | Provides an automated framework to evaluate pipeline precision, recall, loop attempts, and execution time. | The batch evaluation engine in `run.py --batch` maps all 20 queries, compiles telemetry metrics, and records outputs to `results.json`. |
 | **Scalability** | Decouples microservice components using A2A interfaces, optimizes SQLite FTS5 for 3M+ records, and connects standard MCP servers. | Outlines DB-level BM25 scoring, recursive SQL CTE graph traversals, the A2A sequence, and stdio/SSE Healthcare MCP integrations. |
+
 
