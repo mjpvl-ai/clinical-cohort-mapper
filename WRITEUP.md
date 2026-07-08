@@ -140,3 +140,157 @@ To transition this prototype into a production-grade, enterprise-scale clinical 
 ### Stage 5: Clinician-in-the-Loop (CITL) UI
 *   Build a monitoring dashboard that visualizes active queries, candidate mappings, and telemetry traces.
 *   Route mappings with low confidence scores ($<0.85$) to a manual clinician review queue for override, feeding decisions back to improve the model.
+
+---
+
+## 6. Distributed Microservices: The Need and Advantages of the A2A Protocol
+
+To transition the CDGR mapping engine from a local pipeline into a production healthcare microservices mesh, we have adopted the **Agent-to-Agent (A2A)** protocol. 
+
+### Why A2A is Needed in Clinical Cohort Mapping
+1. **Bridging Network & Security Boundaries**: In real-world hospital networks (EHR domains, proprietary data warehouses), clinical terminology databases reside behind strict firewalls and security zones. A centralized monolithic mapping tool cannot directly connect to all these databases. Exposing each database via an A2A-compliant agent allows them to run locally in their secure zones while receiving queries via the standard A2A API.
+2. **Heterogeneous Runtimes**: The *Linguist* and *Auditor* agents rely on heavy LLM inference engines (requiring GPU environments), while the *Informatician* is database/search index-heavy (requiring CPU/RAM optimized environments). Decoupling them prevents resource contention and allows hosting each agent in an environment tailored to its resource profile.
+3. **Standardized Interoperability**: Healthcare environments contain systems built on diverse stacks (Python, Go, Java). A2A establishes a standard communication interface using JSON-RPC/REST and **Agent Cards** that guarantees any standard agent can collaborate without sharing proprietary internal code.
+
+### Advantages of the A2A Protocol
+*   **Federated Discovery via Agent Cards**: Agents publish their capability definitions via the `/.well-known/agent-card.json` endpoint. The gateway dynamically resolves agent metadata, versions, and skill schemas at runtime, eliminating hardcoded orchestrator configurations.
+*   **End-to-End Trace Propagation**: Using W3C Trace Context headers (`traceparent`/`tracestate`) wrapped in A2A request envelopes, trace IDs remain linked as calls bounce between microservices, providing a complete waterfall trace of the reflexion loop in tools like **Otelite** or **Grafana/Tempo**.
+*   **Decoupled Scaling**: High-volume query periods can trigger horizontal scaling for the retrieval agent (*Informatician*) independently of the LLM parser/validator agents, minimizing cloud hosting costs.
+*   **Asynchronous Task Orchestration**: For long-running batch cohort mapping pipelines, the A2A protocol natively handles task state management (`submitted`, `working`, `completed`), allowing clients to check status asynchronously rather than blocking connections.
+
+### A2A Communication & Architecture Flow
+
+The diagrams below describe how the client discovers agent capabilities via the **Agent Card**, how the orchestrator gateway utilizes the **A2A protocol envelope** for messaging, and where standard **W3C Trace Context Propagation** lies.
+
+#### 1. A2A Component Architecture Diagram
+This diagram shows the network boundaries, API routes, and where the A2A communication layer sits in relation to the agents and the client:
+
+```mermaid
+graph TD
+    subgraph Client Application Layer
+        Client["🧑‍💻 Clinical Client / Portal"]
+    end
+
+    subgraph A2A Gateway Layer
+        Gateway["🌐 REST API Gateway (app.py)"]
+        Discovery["🔍 Agent Card Resolver (a2a-sdk)"]
+    end
+
+    subgraph A2A Communication Layer (HTTP REST / W3C Trace Headers)
+        LinguistAPI["POST /api/v1/agent/linguist"]
+        InformaticianAPI["POST /api/v1/agent/informatician"]
+        AuditorAPI["POST /api/v1/agent/auditor"]
+        CardAPI["GET /.well-known/agent-card.json"]
+    end
+
+    subgraph Decoupled Microservice Agents
+        LinguistAgent["🗣️ Medical Linguist Agent"]
+        InformaticianAgent["🔎 Medical Informatician Agent"]
+        AuditorAgent["🛡️ Clinical Auditor Agent"]
+    end
+
+    subgraph Databases & External Services
+        LocalDB["🗄️ Local Vocabulary (SQLite)"]
+        NLM["🌐 Public NIH/NLM APIs"]
+        LLM["🧠 LLM Provider (Gemini / Local Fallback)"]
+    end
+
+    %% Client Interactions
+    Client -->|"1. Fetch Capabilities"| CardAPI
+    Client -->|"2. Submit Query"| Gateway
+    Gateway --> Discovery
+
+    %% Gateway to A2A API
+    Gateway -->|"A2A Wrap & Trace Inject"| LinguistAPI
+    Gateway -->|"A2A Wrap & Trace Inject"| InformaticianAPI
+    Gateway -->|"A2A Wrap & Trace Inject"| AuditorAPI
+
+    %% A2A API to Agents
+    LinguistAPI --> LinguistAgent
+    InformaticianAPI --> InformaticianAgent
+    AuditorAPI --> AuditorAgent
+
+    %% Agent Interactions
+    LinguistAgent -.-> LLM
+    InformaticianAgent --> LocalDB
+    InformaticianAgent --> NLM
+    AuditorAgent -.-> LLM
+```
+
+#### 2. Agent-to-Agent Communication Sequence Diagram
+This diagram explains the step-by-step messaging protocol, including trace propagation and the reflexion loop retry cycles:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as 🧑‍💻 Clinical Client / User
+    participant Gateway as 🌐 API Gateway (Orchestrator)
+    participant SDK as 📦 Official A2A SDK
+    participant Linguist as 🗣️ Medical Linguist Agent
+    participant Informatician as 🔎 Medical Informatician Agent
+    participant Auditor as 🛡️ Clinical Auditor Agent
+
+    Note over Client, Auditor: Discovery Phase
+    Client->>Gateway: GET /.well-known/agent-card.json (Fetch capabilities)
+    Gateway-->>Client: Returns AgentCard JSON (name, version, skills, interfaces)
+
+    Note over Client, Auditor: Orchestration & Mapping Phase
+    Client->>Gateway: POST /api/v1/map-cohort (JSON: query)
+    Note over Gateway: Start root OTel trace span (MapClinicalQuery)
+
+    loop Reflection Cycle (up to max_retries)
+        Gateway->>SDK: Wrap context & Inject W3C Trace Headers (traceparent)
+        SDK->>Linguist: POST /api/v1/agent/linguist (A2A Message Envelope)
+        Note over Linguist: Start child trace span<br/>Extract intent / generate critique
+        Linguist-->>Gateway: Return ClinicalIntent JSON
+
+        Gateway->>SDK: Wrap intent & Inject W3C Trace Headers
+        SDK->>Informatician: POST /api/v1/agent/informatician (A2A Message Envelope)
+        Note over Informatician: Start child trace span<br/>Retrieve candidates (lexical/semantic)
+        Informatician-->>Gateway: Return CandidateCodes JSON
+
+        Gateway->>SDK: Wrap intent + candidates & Inject W3C Trace Headers
+        SDK->>Auditor: POST /api/v1/agent/auditor (A2A Message Envelope)
+        Note over Auditor: Start child trace span<br/>Validate domain/hierarchy consensus
+        Auditor-->>Gateway: Return AuditorResponse (is_approved, critique, selected)
+        
+        alt is_approved == True
+            Note over Gateway: Break loop
+        else is_approved == False
+            Note over Gateway: Increment correction_attempts
+        end
+    end
+
+    Gateway-->>Client: Return final MappingResult JSON (including trace metadata)
+```
+
+---
+
+## 7. Integrating Healthcare MCP (Model Context Protocol) Servers
+
+To expand the capabilities of the CDGR pipeline, the orchestrator and agents can integrate standard healthcare Model Context Protocol (MCP) servers, such as the open-source [healthcare-mcp-public](https://github.com/Cicatriiz/healthcare-mcp-public) server.
+
+### Architecture Integration
+Rather than writing custom API wrappers for every external medical registry, agents act as MCP clients to delegate queries to the MCP server.
+
+```
+ [Linguist]    [Informatician]    [Auditor]  (A2A Agents)
+     │                │               │
+     └────────────────┼───────────────┘
+                      ▼
+            [ A2A Gateway Layer ]
+                      │
+                      ▼ (MCP Client Connection via STDIO/SSE)
+         [ Healthcare MCP Server ]
+           ├── FDA Drug Tool (fda-tool.js)
+           ├── ICD-10 Terminology Tool (medical-terminology-tool.js)
+           └── PubMed Research Tool (pubmed-tool.js)
+```
+
+1. **ICD-10-CM Candidate Expansion**: The `MedicalInformatician` invokes the `lookupICDCode` tool from the MCP server to search codes and names from the NLM ClinicalTables API.
+2. **Clinical trials & FDA Label Checks**: The `ClinicalAuditor` queries the `fda-tool.js` to extract ingredients and indications for unknown drug inputs to resolve domain category classification.
+3. **Medical Research Reference**: For complex or ambiguous conditions, the auditor queries PubMed (`pubmed-tool.js`) to back up its reflexion decisions with clinical literature search results.
+
+### Advantages
+* **Interoperable Interface**: The LLM uses standardized JSON-RPC schemas to invoke functions, separating data parsing logic from agent flow.
+* **Extensibility**: Adding new clinical modules (e.g. DICOM image metadata parsing) requires registering a new tool on the MCP server without updating agent pipelines.

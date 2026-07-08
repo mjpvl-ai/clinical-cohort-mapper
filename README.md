@@ -176,37 +176,82 @@ Each query produces a structured JSON result:
 }
 ```
 
-## Observability (Grafana + Tempo)
+## Observability & Distributed Tracing
 
-The pipeline is instrumented with the **OpenTelemetry** standard. Traces are visualized in **Grafana** with **Tempo** as the trace backend.
+The pipeline is instrumented with the **OpenTelemetry (OTel)** standard. Spans are also logged locally to `telemetry.log` as structured JSON lines.
 
-### Start the Observability Stack
+You can visualize and trace the CDGR pipeline execution using either a lightweight zero-dependency tool or a full Docker-based observability stack.
 
+---
+
+### Option 1: Lightweight Observability with Otelite (Recommended)
+
+[Otelite](https://github.com/planetf1/otelite) is a lightweight, zero-dependency OpenTelemetry receiver and dashboard designed for local LLM development. It starts in seconds and uses minimal system resources (<100MB RAM).
+
+#### 1. Install Otelite
+*   **Via curl installer (Linux/macOS):**
+    ```bash
+    curl --proto '=https' --tlsv1.2 -LsSf https://github.com/planetf1/otelite/releases/latest/download/otelite-installer.sh | sh
+    ```
+*   **Via Cargo (Rust):**
+    ```bash
+    cargo install otelite
+    ```
+*   **Via Homebrew (macOS):**
+    ```bash
+    brew install planetf1/tap/otelite
+    ```
+
+#### 2. Start the Receiver & Dashboard
 ```bash
-docker compose up -d
+otelite serve
 ```
+This launches:
+*   An OTLP HTTP receiver on `localhost:4318` (automatically probed and used by the mapper)
+*   A real-time Web Dashboard at [http://localhost:3000](http://localhost:3000)
+*   A Terminal UI (`otelite tui` in another shell)
 
-This starts:
-- **Grafana** → [http://localhost:3000](http://localhost:3000) (no login required)
-- **Tempo** → receives OTLP traces on ports `4317` (gRPC) / `4318` (HTTP)
-
-### Run a Query
-
+#### 3. Run a Query
 ```bash
 python run.py --query "Patients with HbA1c above 7%"
 ```
+The clinical mapper auto-detects `otelite` listening on port `4318` and exports traces automatically.
 
-The mapper **auto-detects** Tempo on `localhost:4318` and exports traces via OTLP. No env vars needed.
+#### 4. View Spans
+Open [http://localhost:3000](http://localhost:3000) in your browser or run `otelite tui` in the terminal to inspect traces, waterfall charts, token usage metrics, latency breakdown (TTFT), and LLM cost estimation.
 
-### View Traces in Grafana
+---
 
+### Option 2: Full Observability Stack (Grafana + Tempo)
+
+If you prefer a full enterprise-style stack, you can run Grafana and Tempo via Docker Compose.
+
+#### 1. Start the Stack
+```bash
+docker compose up -d
+```
+This starts:
+*   **Grafana** → [http://localhost:3000](http://localhost:3000) (no login required)
+*   **Tempo** → receives OTLP traces on ports `4317` (gRPC) / `4318` (HTTP)
+
+#### 2. Run a Query
+```bash
+python run.py --query "Patients with HbA1c above 7%"
+```
+The mapper auto-detects the Tempo OTLP receiver on port `4318` and exports traces.
+
+#### 3. View Traces in Grafana
 1. Open [http://localhost:3000/explore](http://localhost:3000/explore)
-2. Select **Tempo** as the datasource
-3. Switch to **Search** query type
-4. Set Service Name = `clinical-cohort-mapper`
-5. Click **Run query** → click a trace to see the waterfall timeline
+2. Select **Tempo** as the datasource.
+3. Switch to **Search** query type.
+4. Set Service Name = `clinical-cohort-mapper`.
+5. Click **Run query** and click on a trace to see the waterfall timeline.
 
-Each trace shows nested spans with clinical attributes:
+---
+
+### Trace Structure & Attributes
+
+Regardless of the visualizer, each clinical query trace details the CDGR agent reflexion loop:
 
 ```
 MapClinicalQuery (clinical.query, clinical.top_code, clinical.status)
@@ -215,7 +260,6 @@ MapClinicalQuery (clinical.query, clinical.top_code, clinical.status)
   └── Auditor.audit (clinical.is_approved, clinical.selected_count)
 ```
 
-Spans are also logged locally to `telemetry.log` as structured JSON lines for offline analysis.
 
 ## Production Scalability & Improvement Plan
 
@@ -267,6 +311,188 @@ The following section outlines the trade-offs of this prototype implementation a
 *   **Reflexion Loop Safeguards**: The auditor agent's self-correcting logic successfully flags and filters out clinically imprecise matches (e.g., rejecting unspecified `N18.9` for CKD Stage 3). This is significantly more precise than single-pass vector database matches.
 *   **Prototype Outage Risks**: Heavy reliance on live public API endpoints (NIH RxNorm, NLM) means external downtime halts LOINC/ICD-10/RxNorm lookups. If Gemini rate-limits (HTTP 429), fallback to the local `medgemma-4b-it` GGUF or local `qwen3:0.6b` helps preserve intent parsing accuracy.
 *   *Production Target*: **99.99% reliability** via a self-hosted database cluster (no internet required), high-performance local fallbacks (e.g. Llama-3-70B), and a human-in-the-loop (HITL) manual review interface for queries with confidence scores `< 0.85`.
+
+## Extending to Proprietary Vocabularies
+
+To support a proprietary clinical code system (containing Code IDs, Display names, Domains/Categories, Synonyms, Parent/Child relationships, and mappings to standard public vocabularies) while maintaining high recall and precision, the CDGR pipeline adapts as follows:
+
+1. **Ingestion & Cache Layer**: The proprietary system is ingested into the local cache (`mapper/db.py`), storing display names and synonyms for rapid lexical matching (e.g. SQLite FTS5), parent/child relationships to build hierarchical lookup tables, and a cross-map table linking proprietary codes to standard terminologies (e.g., LOINC, ICD-10, RxNorm).
+2. **Recall Optimization (Informatician)**: 
+   - **Direct & Bridged Lookup**: The retriever matches search terms and synonyms directly against proprietary display names and synonyms. In addition, any standard public codes retrieved via NLM/RxNorm APIs are used as a "bridge" to cross-reference and pull in mapped proprietary codes.
+   - **Hierarchical Expansion**: General matches automatically pull in their parent/child lineage to ensure all relevant specificity levels are included in the initial candidate pool.
+3. **Precision Optimization (Auditor & Reflexion)**:
+   - **Domain Filtering**: Instantly filters out candidates with mismatched domains/categories.
+   - **Contextual Lineage Checks**: The LLM Auditor is fed the parent/child lineage of candidate codes to verify exact alignment with the query's clinical constraints.
+   - **Reflexion Loop Routing**: If a code is rejected as too broad or narrow, the critic's feedback guides the retriever to traverse up or down the parent/child graph to fetch precise variants in the next reflexion loop.
+
+## Exposing the Pipeline as a REST API with A2A Protocol
+
+To serve production healthcare workflows, the CDGR mapping engine is exposed as a stateless **REST API** endpoint that accepts a raw clinical query as input and returns a structured JSON mapping:
+
+```http
+POST /api/v1/map-cohort
+Content-Type: application/json
+
+{
+  "query": "Patients with HbA1c above 7%"
+}
+```
+
+### Why the Agent-to-Agent (A2A) Protocol is Utilized & Its Advantages
+
+Integrating the **A2A protocol** at the API gateway layer is essential for orchestrating distributed, secure, and observable cohort mappings in enterprise environments:
+
+#### The Need for A2A:
+1. **Network Boundary Isolation**: In clinical setups, terminology databases often reside behind private, hospital-managed firewalls. A monolithic central application cannot directly query them. Wrapping local databases as A2A-compliant agents allows them to receive incoming queries securely without exposing raw databases to the external internet.
+2. **Heterogeneous Runtime Scaling**: The *Linguist* and *Auditor* are LLM-driven agents requiring GPU-enabled environments. The *Informatician* is CPU/RAM intensive. Decoupling them using A2A prevents resource contention and optimizes infrastructure costs.
+3. **Open Interoperability**: Healthcare architectures combine microservices built on different stacks (Python, Go, Node.js). A2A provides a language-agnostic interface with standard message wrappers.
+
+#### Core Advantages:
+*   **Federated Discovery (Agent Cards)**: The server publishes its details, version, and schemas via the `GET /.well-known/agent-card.json` endpoint using the official Python `a2a-sdk`. Peer agents and gateways query this dynamically to discover skills.
+*   **Standardized Task Lifecycles**: Supports standard task creation and cancellation states, allowing long-running cohort mappings to execute asynchronously.
+
+#### A2A Architecture & Communication Diagrams
+
+##### 1. Network Component Topology
+The topology diagram below outlines the separation of concerns, the API endpoints exposed, and where the A2A layer intersects:
+
+```mermaid
+graph TD
+    subgraph Client Application Layer
+        Client["🧑‍💻 Clinical Client / Portal"]
+    end
+
+    subgraph A2A Gateway Layer
+        Gateway["🌐 REST API Gateway (app.py)"]
+        Discovery["🔍 Agent Card Resolver (a2a-sdk)"]
+    end
+
+    subgraph A2A Communication Layer (HTTP REST / W3C Trace Headers)
+        LinguistAPI["POST /api/v1/agent/linguist"]
+        InformaticianAPI["POST /api/v1/agent/informatician"]
+        AuditorAPI["POST /api/v1/agent/auditor"]
+        CardAPI["GET /.well-known/agent-card.json"]
+    end
+
+    subgraph Decoupled Microservice Agents
+        LinguistAgent["🗣️ Medical Linguist Agent"]
+        InformaticianAgent["🔎 Medical Informatician Agent"]
+        AuditorAgent["🛡️ Clinical Auditor Agent"]
+    end
+
+    subgraph Databases & External Services
+        LocalDB["🗄️ Local Vocabulary (SQLite)"]
+        NLM["🌐 Public NIH/NLM APIs"]
+        LLM["🧠 LLM Provider (Gemini / Local Fallback)"]
+    end
+
+    %% Client Interactions
+    Client -->|"1. Fetch Capabilities"| CardAPI
+    Client -->|"2. Submit Query"| Gateway
+    Gateway --> Discovery
+
+    %% Gateway to A2A API
+    Gateway -->|"A2A Wrap & Trace Inject"| LinguistAPI
+    Gateway -->|"A2A Wrap & Trace Inject"| InformaticianAPI
+    Gateway -->|"A2A Wrap & Trace Inject"| AuditorAPI
+
+    %% A2A API to Agents
+    LinguistAPI --> LinguistAgent
+    InformaticianAPI --> InformaticianAgent
+    AuditorAPI --> AuditorAgent
+
+    %% Agent Interactions
+    LinguistAgent -.-> LLM
+    InformaticianAgent --> LocalDB
+    InformaticianAgent --> NLM
+    AuditorAgent -.-> LLM
+```
+
+##### 2. Agent-to-Agent Communication Sequence Flow
+The sequence diagram details the consensus-driven loop and trace header injection across microservice requests:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as 🧑‍💻 Clinical Client / User
+    participant Gateway as 🌐 API Gateway (Orchestrator)
+    participant SDK as 📦 Official A2A SDK
+    participant Linguist as 🗣️ Medical Linguist Agent
+    participant Informatician as 🔎 Medical Informatician Agent
+    participant Auditor as 🛡️ Clinical Auditor Agent
+
+    Note over Client, Auditor: Discovery Phase
+    Client->>Gateway: GET /.well-known/agent-card.json (Fetch capabilities)
+    Gateway-->>Client: Returns AgentCard JSON (name, version, skills, interfaces)
+
+    Note over Client, Auditor: Orchestration & Mapping Phase
+    Client->>Gateway: POST /api/v1/map-cohort (JSON: query)
+    Note over Gateway: Start root OTel trace span (MapClinicalQuery)
+
+    loop Reflection Cycle (up to max_retries)
+        Gateway->>SDK: Wrap context & Inject W3C Trace Headers (traceparent)
+        SDK->>Linguist: POST /api/v1/agent/linguist (A2A Message Envelope)
+        Note over Linguist: Start child trace span<br/>Extract intent / generate critique
+        Linguist-->>Gateway: Return ClinicalIntent JSON
+
+        Gateway->>SDK: Wrap intent & Inject W3C Trace Headers
+        SDK->>Informatician: POST /api/v1/agent/informatician (A2A Message Envelope)
+        Note over Informatician: Start child trace span<br/>Retrieve candidates (lexical/semantic)
+        Informatician-->>Gateway: Return CandidateCodes JSON
+
+        Gateway->>SDK: Wrap intent + candidates & Inject W3C Trace Headers
+        SDK->>Auditor: POST /api/v1/agent/auditor (A2A Message Envelope)
+        Note over Auditor: Start child trace span<br/>Validate domain/hierarchy consensus
+        Auditor-->>Gateway: Return AuditorResponse (is_approved, critique, selected)
+        
+        alt is_approved == True
+            Note over Gateway: Break loop
+        else is_approved == False
+            Note over Gateway: Increment correction_attempts
+        end
+    end
+
+    Gateway-->>Client: Return final MappingResult JSON (including trace metadata)
+```
+
+### Starting and Querying the A2A Server
+
+#### 1. Start the Server
+Start the FastAPI server on port `8000`:
+```bash
+python app.py
+```
+
+#### 2. Query the Gateway
+You can trigger the CDGR orchestrator using a standard `curl` request:
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/map-cohort \
+     -H "Content-Type: application/json" \
+     -d '{"query": "Patients currently taking metformin", "max_retries": 3}'
+```
+
+#### 3. Query Individual Agents Directly (A2A Style)
+Because the agents are decoupled, you can also interact with them directly:
+*   **Medical Linguist**:
+    ```bash
+    curl -X POST http://127.0.0.1:8000/api/v1/agent/linguist \
+         -H "Content-Type: application/json" \
+         -d '{"query": "Patients with HbA1c above 7%"}'
+    ```
+*   **Medical Informatician**:
+    ```bash
+    curl -X POST http://127.0.0.1:8000/api/v1/agent/informatician \
+         -H "Content-Type: application/json" \
+         -d '{"intent": {"original_query": "Patients with HbA1c above 7%", "clinical_entities": ["HbA1c"], "synonyms": ["glycated hemoglobin"], "domain": "measurement", "status": "any", "constraint": {"operator": ">", "value": 7.0, "unit": "%"}}}'
+    ```
+*   **Clinical Auditor**:
+    ```bash
+    curl -X POST http://127.0.0.1:8000/api/v1/agent/auditor \
+         -H "Content-Type: application/json" \
+         -d '{"intent": {"original_query": "Patients with HbA1c above 7%", "clinical_entities": ["HbA1c"], "synonyms": ["glycated hemoglobin"], "domain": "measurement", "status": "any", "constraint": {"operator": ">", "value": 7.0, "unit": "%"}}, "candidates": [{"vocabulary": "LOINC", "code": "4548-4", "display": "Hemoglobin A1c/Hemoglobin.total in Blood", "rank": 1}]}'
+    ```
+
+When querying the gateway `/api/v1/map-cohort`, the system will generate a parent trace context and automatically propagate it to each of these sub-agent HTTP requests, creating a beautiful nested span waterfall in your telemetry dashboard.
 
 ## Key Design Decisions
 
