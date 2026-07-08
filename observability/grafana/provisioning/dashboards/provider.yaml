@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'Clinical Cohort Mapper'
+    orgId: 1
+    folder: 'Clinical Cohort Mapper'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards

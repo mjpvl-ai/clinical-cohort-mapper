@@ -1,0 +1,83 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "title": "Recent Traces (Consensus-Driven Graph Reflexion Loops)",
+      "type": "traces",
+      "datasource": {
+        "type": "tempo",
+        "uid": "Tempo"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "Tempo"
+          },
+          "query": "{resource.service.name=\"clinical-cohort-mapper\"}",
+          "queryType": "nativeSearch",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 2,
+      "title": "Agentic CDGR Architecture Quick Reference",
+      "type": "text",
+      "options": {
+        "mode": "markdown",
+        "content": "# Consensus-Driven Graph Reflexion (CDGR) Pipeline\n\nThis dashboard allows you to inspect the multi-agent reflexion loop trace history. When a query is run, the pipeline executes the following sequence:\n\n1. **Medical Linguist (`Parser.parse_query`)**: Performs entity extraction and domain identification.\n2. **Medical Informatician (`TerminologyClient.retrieve`)**: Queries LOINC, ICD-10-CM, RxNorm, and the local database to find candidate codes.\n3. **Clinical Auditor (`Auditor.audit`)**: Compares candidates, checks precision, and approves/rejects them.\n4. **Self-Correction (`SynonymAgent.expand`)**: If rejected, the critique feeds back to the Linguist for synonym expansion and retrieval retry.\n\n### How to Analyze a Trace:\n* Click on any trace in the list above to view the **waterfall visualization**.\n* Look for the **`clinical.query`** and **`clinical.domain`** attributes in the root span (`MapClinicalQuery`).\n* Inspect individual child spans to see latency per agent node.\n* Check if there are **`SynonymAgent.expand`** spans, indicating self-correction loops were triggered."
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Clinical Cohort Mapper Dashboard",
+  "uid": "cc_mapper_dashboard",
+  "version": 1,
+  "weekStart": ""
+}
