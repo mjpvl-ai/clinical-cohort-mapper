@@ -18,8 +18,34 @@ def load_dotenv():
 # Load environment variables at module initialization
 load_dotenv()
 
+# Cache model instance to avoid reloading on every call
+_local_llama_model = None
+
+def get_local_model():
+    """Initializes the local llama.cpp model once if the GGUF file exists."""
+    global _local_llama_model
+    if _local_llama_model is not None:
+        return _local_llama_model
+
+    gguf_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models", "medgemma-4b-it-Q4_K_M.gguf")
+    if os.path.exists(gguf_path):
+        try:
+            from llama_cpp import Llama
+            logger.info(f"Loading local MedGemma GGUF model from {gguf_path}...")
+            _local_llama_model = Llama(
+                model_path=gguf_path,
+                n_ctx=2048,
+                n_threads=4,      # Set to number of CPU cores
+                n_gpu_layers=-1,   # Offloads all layers to GPU if compiled with CUDA
+                verbose=False
+            )
+            return _local_llama_model
+        except Exception as e:
+            logger.warning(f"Failed to load local GGUF model: {e}")
+    return None
+
 def call_llm(prompt: str, json_mode: bool = False) -> str:
-    """Queries Gemini API with fallbacks, falling back to local qwen3:0.6b if needed."""
+    """Queries Gemini API with fallbacks, falling back to local GGUF MedGemma or Ollama."""
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     
     if api_key:
@@ -76,7 +102,22 @@ def call_llm(prompt: str, json_mode: bool = False) -> str:
                     logger.warning(f"Failed to query Gemini model {model}: {e}")
                     break
                     
-    # Fallback to local qwen3:0.6b model via Ollama
+    # Fallback 1: Local MedGemma GGUF (Second priority)
+    local_model = get_local_model()
+    if local_model:
+        try:
+            logger.info("Using local MedGemma GGUF model...")
+            response = local_model(
+                prompt,
+                max_tokens=512,
+                temperature=0.1,
+                response_format={"type": "json_object"} if json_mode else None
+            )
+            return response["choices"][0]["text"]
+        except Exception as e:
+            logger.warning(f"Local MedGemma call failed: {e}")
+
+    # Fallback 2: Local qwen3:0.6b model via Ollama
     try:
         # Quick check if Ollama port is listening to avoid hanging
         import urllib.request

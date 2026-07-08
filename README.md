@@ -52,8 +52,9 @@ graph TB
     end
 
     subgraph LLM["LLM Backend"]
-        GEM["Gemini 3.1 Flash Lite<br/><i>Primary</i>"]
-        OLL["Qwen3 0.6B via Ollama<br/><i>Local Fallback</i>"]
+        GEM["Gemini 3.1 Flash Lite<br/><i>Primary (API)</i>"]
+        MEDG["MedGemma 4B GGUF<br/><i>2nd Priority (Local llama.cpp)</i>"]
+        OLL["Qwen3 0.6B via Ollama<br/><i>3rd Priority (Local API)</i>"]
     end
 
     subgraph Observability["OpenTelemetry"]
@@ -64,7 +65,8 @@ graph TB
     Q --> P
     R --> LOINC & ICD & RX & DB
     P & A -.->|"LLM calls"| GEM
-    GEM -.->|"fallback"| OLL
+    GEM -.->|"fallback 1"| MEDG
+    MEDG -.->|"fallback 2"| OLL
     A -->|"✅ Approved"| OUT["📋 MappingResult JSON"]
     Orchestrator -.->|"spans"| TEL & OTLP
 
@@ -263,7 +265,7 @@ The following section outlines the trade-offs of this prototype implementation a
 
 ### Robustness & Clinical Reliability
 *   **Reflexion Loop Safeguards**: The auditor agent's self-correcting logic successfully flags and filters out clinically imprecise matches (e.g., rejecting unspecified `N18.9` for CKD Stage 3). This is significantly more precise than single-pass vector database matches.
-*   **Prototype Outage Risks**: Heavy reliance on live public API endpoints (NIH RxNorm, NLM) means external downtime halts LOINC/ICD-10/RxNorm lookups. If Gemini rate-limits (HTTP 429), fallback to the local `qwen3:0.6b` degrades parsing quality due to its small size.
+*   **Prototype Outage Risks**: Heavy reliance on live public API endpoints (NIH RxNorm, NLM) means external downtime halts LOINC/ICD-10/RxNorm lookups. If Gemini rate-limits (HTTP 429), fallback to the local `medgemma-4b-it` GGUF or local `qwen3:0.6b` helps preserve intent parsing accuracy.
 *   *Production Target*: **99.99% reliability** via a self-hosted database cluster (no internet required), high-performance local fallbacks (e.g. Llama-3-70B), and a human-in-the-loop (HITL) manual review interface for queries with confidence scores `< 0.85`.
 
 ## Key Design Decisions
@@ -271,7 +273,7 @@ The following section outlines the trade-offs of this prototype implementation a
 - **No proprietary APIs** — all terminology lookups use free, public NIH/NLM endpoints
 - **Self-correction over single-pass** — the reflexion loop prevents clinically incorrect mappings (e.g. rejecting `N18.9` "CKD unspecified" when the query asks for "CKD stage 3")
 - **Deterministic ranking** — explicit scoring function (not purely LLM-based) for reproducibility
-- **Gemini API with local fallback** — uses `gemini-3.1-flash-lite` with fallback to local `qwen3:0.6b` via Ollama
+- **Gemini API with local fallback** — uses `gemini-3.1-flash-lite` with cascading fallbacks to local `medgemma-4b-it` GGUF (via `llama-cpp-python`) as second priority and `qwen3:0.6b` (via Ollama) as third priority
 
 ## License
 
