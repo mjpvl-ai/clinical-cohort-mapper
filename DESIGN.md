@@ -144,7 +144,7 @@ graph TD
         Discovery["🔍 Agent Card Resolver (a2a-sdk)"]
     end
 
-    subgraph A2A Communication Layer (HTTP REST / W3C Trace Headers)
+    subgraph "A2A Communication Layer (HTTP REST / W3C Trace Headers)"
         LinguistAPI["POST /api/v1/agent/linguist"]
         InformaticianAPI["POST /api/v1/agent/informatician"]
         AuditorAPI["POST /api/v1/agent/auditor"]
