@@ -45,16 +45,25 @@ def get_local_model():
     return None
 
 def call_ollama(prompt: str, json_mode: bool = False) -> str:
-    """Helper to query local qwen3:0.6b via Ollama."""
+    """Helper to query qwen3:0.6b via Ollama (supports custom OLLAMA_HOST)."""
     import urllib.request
+    ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+    # Ensure scheme is present
+    if not ollama_host.startswith(("http://", "https://")):
+        ollama_url = f"http://{ollama_host}"
+    else:
+        ollama_url = ollama_host
+        
+    ping_url = ollama_url.rstrip("/")
     try:
-        with urllib.request.urlopen("http://localhost:11434", timeout=0.5) as r:
+        with urllib.request.urlopen(ping_url, timeout=1.0) as r:
             pass
-    except Exception:
-        raise RuntimeError("Ollama service is not running locally.")
+    except Exception as e:
+        raise RuntimeError(f"Ollama service is not running at {ping_url}: {e}")
         
     import ollama
-    response = ollama.chat(
+    client = ollama.Client(host=ollama_url)
+    response = client.chat(
         model='qwen3:0.6b',
         messages=[{'role': 'user', 'content': prompt}],
         format='json' if json_mode else None
