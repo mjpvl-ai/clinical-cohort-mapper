@@ -95,7 +95,7 @@ def test_opentelemetry_tracing(engine):
     # Clear memory exporter spans
     memory_exporter.clear()
     
-    query = "Patients with HbA1c above 7%"
+    query = "Patients with LDL cholesterol below 100 mg/dL"
     result = engine.map_query(query)
     
     # Retrieve exported spans

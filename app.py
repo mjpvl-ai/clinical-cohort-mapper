@@ -18,14 +18,111 @@ from mapper.telemetry import init_telemetry, shutdown_telemetry, get_tracer
 # Import OpenTelemetry W3C Trace Context Propagator
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
-from a2a.types import AgentCard, AgentSkill, AgentInterface, AgentCapabilities, AgentProvider
-from a2a.server.routes import add_a2a_routes_to_fastapi, create_agent_card_routes
+import asyncio
+import json
+from a2a.types import (
+    AgentCard, AgentSkill, AgentInterface, AgentCapabilities, AgentProvider,
+    TaskState, TaskStatusUpdateEvent, TaskArtifactUpdateEvent
+)
+from a2a.server.agent_execution import AgentExecutor, RequestContext
+from a2a.server.agent_execution.agent_executor import EventQueue
+from a2a.server.tasks.task_updater import TaskUpdater
+from a2a.helpers import (
+    new_task_from_user_message,
+    new_text_message,
+    get_message_text,
+    new_text_part,
+)
+from a2a.server.tasks.inmemory_task_store import InMemoryTaskStore
+from a2a.server.request_handlers import DefaultRequestHandler
+from a2a.server.routes import (
+    add_a2a_routes_to_fastapi,
+    create_agent_card_routes,
+    create_rest_routes,
+    create_jsonrpc_routes,
+)
 
 # Initialize agents globally
 linguist_agent = MedicalLinguist()
 informatician_agent = MedicalInformatician()
 auditor_agent = ClinicalAuditor()
 engine_helper = MappingEngine()
+
+class ClinicalCohortMapperAgentExecutor(AgentExecutor):
+    def __init__(self) -> None:
+        self.engine = engine_helper
+
+    async def execute(
+        self,
+        context: RequestContext,
+        event_queue: EventQueue,
+    ) -> None:
+        # 1. Collect a task from request context
+        if context.current_task:
+            task = context.current_task
+        else:
+            task = new_task_from_user_message(context.message)
+            await event_queue.enqueue_event(task)
+
+        # 2. Update task status in EventQueue using TaskUpdater class object
+        task_updater = TaskUpdater(
+            event_queue=event_queue, task_id=task.id, context_id=task.context_id
+        )
+        await task_updater.update_status(
+            state=TaskState.TASK_STATE_WORKING,
+            message=new_text_message('Parsing clinical query and searching terminologies...'),
+        )
+
+        # 3. Collect user request from request content and invoke the MappingEngine
+        query = get_message_text(context.message)
+        if query:
+            try:
+                # Runs the synchronous mapping engine in a separate thread to not block the FastAPI event loop.
+                result = await asyncio.to_thread(self.engine.map_query, query)
+                result_json = result.model_dump_json()
+                
+                # 4. Add generated response as an artifact to EventQueue
+                await task_updater.add_artifact(
+                    parts=[new_text_part(text=result_json, media_type='application/json')],
+                    name='MappingResult'
+                )
+                
+                # 5. Update task status to completed
+                await task_updater.update_status(
+                    state=TaskState.TASK_STATE_COMPLETED,
+                    message=new_text_message('Cohort mapping completed successfully.'),
+                )
+            except Exception as e:
+                # Transition status to FAILED
+                await task_updater.update_status(
+                    state=TaskState.TASK_STATE_FAILED,
+                    message=new_text_message(f'Failed to execute cohort mapping: {str(e)}'),
+                )
+                raise e
+        else:
+            await task_updater.add_artifact(
+                parts=[new_text_part(text='No text query provided.', media_type='text/plain')],
+                name='Error'
+            )
+            await task_updater.update_status(
+                state=TaskState.TASK_STATE_FAILED,
+                message=new_text_message('No text input is provided!'),
+            )
+
+    async def cancel(
+        self,
+        context: RequestContext,
+        event_queue: EventQueue,
+    ) -> None:
+        """Cancel ongoing task."""
+        if context.current_task:
+            task_updater = TaskUpdater(
+                event_queue=event_queue, task_id=context.current_task.id, context_id=context.current_task.context_id
+            )
+            await task_updater.update_status(
+                state=TaskState.TASK_STATE_CANCELED,
+                message=new_text_message('Task has been canceled.'),
+            )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -55,6 +152,16 @@ agent_card = AgentCard(
     default_input_modes=["text/plain", "application/json"],
     default_output_modes=["application/json"],
     supported_interfaces=[
+        AgentInterface(
+            url="/api/v1/a2a/jsonrpc",
+            protocol_binding="JSONRPC",
+            protocol_version="1.0.0"
+        ),
+        AgentInterface(
+            url="/api/v1/a2a",
+            protocol_binding="HTTP+JSON",
+            protocol_version="1.0.0"
+        ),
         AgentInterface(
             url="/api/v1/map-cohort",
             protocol_binding="http-rest",
@@ -95,13 +202,32 @@ agent_card = AgentCard(
     ],
     capabilities=AgentCapabilities(
         extended_agent_card=True,
-        streaming=False,
+        streaming=True,
         push_notifications=False
     )
 )
 
-# Register the Agent Card routes using the official A2A SDK
-add_a2a_routes_to_fastapi(app, agent_card_routes=create_agent_card_routes(agent_card))
+# Instantiate A2A server components
+a2a_executor = ClinicalCohortMapperAgentExecutor()
+task_store = InMemoryTaskStore()
+request_handler = DefaultRequestHandler(
+    agent_executor=a2a_executor,
+    task_store=task_store,
+    agent_card=agent_card,
+)
+
+# Create A2A routes
+agent_card_routes = create_agent_card_routes(agent_card)
+rest_routes = create_rest_routes(request_handler, path_prefix='/api/v1/a2a')
+jsonrpc_routes = create_jsonrpc_routes(request_handler, rpc_url='/api/v1/a2a/jsonrpc')
+
+# Register A2A routes to the FastAPI application
+add_a2a_routes_to_fastapi(
+    app,
+    agent_card_routes=agent_card_routes,
+    rest_routes=rest_routes,
+    jsonrpc_routes=jsonrpc_routes,
+)
 
 
 # Request schemas for Agent Endpoints

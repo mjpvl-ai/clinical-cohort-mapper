@@ -128,6 +128,14 @@ Implementing a multi-agent system with iterative self-correction loops introduce
 *   **Observability Context Propagation**: W3C Trace Context headers (`traceparent`/`tracestate`) are carried inside HTTP request headers, ensuring all microservices correlate their logs and spans back to the orchestrator root trace.
 *   **Standardized Task Lifecycles**: Standard task management protocols (e.g. tracking state, cancellations) let long-running, batch cohort mappings run asynchronously without hanging HTTP connections.
 
+### Stateful Asynchronous Task Orchestration (AgentExecutor)
+
+To handle long-running, multi-step cohort mappings in an enterprise-safe manner, the server implements a stateful `AgentExecutor` pattern using the official `a2a-sdk`:
+
+1.  **State Management**: Tasks and their execution states are persisted in an `InMemoryTaskStore` registered in the server application.
+2.  **Asynchronous Orchestration**: The `ClinicalCohortMapperAgentExecutor` receives standard A2A requests, translates user messages into tasks, and wraps the synchronous `MappingEngine` execution inside a non-blocking `asyncio.to_thread` pool.
+3.  **Event Queue & Lifecycle Updates**: A dedicated `EventQueue` tracks progress events. The executor uses `TaskUpdater` to propagate intermediate execution states (e.g., transitioning from `SUBMITTED` -> `WORKING` -> `COMPLETED`) and deliver final mapping artifacts (`MappingResult`) to listeners in real-time.
+
 #### A2A Architecture & Communication Diagrams
 
 ##### 1. Network Component Topology
