@@ -1,5 +1,14 @@
 # Clinical Cohort Query Mapper (CDGR)
 
+[![CI](https://github.com/mjpvl-ai/clinical-cohort-mapper/actions/workflows/ci.yml/badge.svg)](https://github.com/mjpvl-ai/clinical-cohort-mapper/actions/workflows/ci.yml)
+[![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue.svg)](https://www.python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Protocol: A2A](https://img.shields.io/badge/Protocol-A2A%201.0-orange.svg)](https://srotas.ai)
+[![Telemetry: OpenTelemetry](https://img.shields.io/badge/Telemetry-OpenTelemetry-blueviolet.svg)](https://opentelemetry.io)
+[![Linter: Ruff](https://img.shields.io/badge/Linter-Ruff-black.svg)](https://github.com/astral-sh/ruff)
+[![Code Style: Ruff-format](https://img.shields.io/badge/Formatter-Ruff--format-black.svg)](https://github.com/astral-sh/ruff)
+[![Package Manager: uv](https://img.shields.io/badge/Package%20Manager-uv-de5fe9.svg)](https://docs.astral.sh/uv/)
+
 An **agentic AI system** that maps free-form clinical cohort queries to standardized medical terminology codes using a self-correcting **Consensus-Driven Graph Reflexion (CDGR)** pipeline.
 
 It serves as a production-grade Agent-to-Agent (A2A) microservice that parses clinical query constraints, performs hybrid lexical and semantic code searches, and validates mappings against ontology hierarchies to prevent clinical mismatch errors.

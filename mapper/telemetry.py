@@ -1,14 +1,17 @@
-import os
 import json
 import logging
+import os
+
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter, BatchSpanProcessor
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcessor, SpanExporter
 
 logger = logging.getLogger(__name__)
 
+
 class CompactFileSpanExporter(SpanExporter):
     """A custom OpenTelemetry span exporter that writes clean, single-line telemetry logs to a file."""
+
     def __init__(self, file_path: str):
         self.file_path = file_path
 
@@ -25,7 +28,7 @@ class CompactFileSpanExporter(SpanExporter):
                         "parent_id": format(span.parent.span_id, "016x") if span.parent else None,
                         "start_time_unix_ms": round(span.start_time / 1e6),
                         "duration_ms": round(duration_ms, 2),
-                        "attributes": dict(span.attributes)
+                        "attributes": dict(span.attributes),
                     }
                     f.write(json.dumps(span_data) + "\n")
             return 0
@@ -39,11 +42,11 @@ class CompactFileSpanExporter(SpanExporter):
 
 _initialized = False
 
+
 def _try_otlp(provider, endpoint):
     """Attempt to add an OTLP HTTP exporter to the provider."""
     try:
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-        from opentelemetry.sdk.resources import Resource
 
         # Ensure endpoint has /v1/traces path for Tempo compatibility
         traces_endpoint = endpoint.rstrip("/")
@@ -65,6 +68,7 @@ def init_telemetry(log_file: str = "telemetry.log"):
         return
 
     from opentelemetry.sdk.resources import Resource
+
     resource = Resource.create({"service.name": "clinical-cohort-mapper"})
     provider = TracerProvider(resource=resource)
 
@@ -82,6 +86,7 @@ def init_telemetry(log_file: str = "telemetry.log"):
     else:
         # Auto-detect: probe Tempo default OTLP HTTP port
         import socket
+
         try:
             sock = socket.create_connection(("127.0.0.1", 4318), timeout=0.3)
             sock.close()
@@ -92,9 +97,11 @@ def init_telemetry(log_file: str = "telemetry.log"):
     trace.set_tracer_provider(provider)
     _initialized = True
 
+
 def get_tracer():
     """Returns the package-level tracer instance."""
     return trace.get_tracer("clinical_cohort_mapper")
+
 
 def shutdown_telemetry():
     """Flushes and shuts down the OpenTelemetry provider to ensure all spans are exported."""
