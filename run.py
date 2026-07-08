@@ -88,7 +88,7 @@ def run_batch(engine: MappingEngine, output_file: str):
     print(f"Batch mapping complete. Detailed results saved to: {output_file}")
     print("=" * 60)
 
-from mapper.telemetry import init_telemetry
+from mapper.telemetry import init_telemetry, shutdown_telemetry
 
 def main():
     parser = argparse.ArgumentParser(description="Clinical Cohort Query Mapper (CDGR)")
@@ -99,16 +99,18 @@ def main():
     args = parser.parse_args()
     
     init_telemetry()
-    engine = MappingEngine()
-    
-    if args.query:
-        result = engine.map_query(args.query)
-        serialized = serialize_result(result)
-        print(json.dumps(serialized, indent=2))
-    elif args.batch:
-        run_batch(engine, args.output)
-    else:
-        parser.print_help()
+    try:
+        engine = MappingEngine()
+        if args.query:
+            result = engine.map_query(args.query)
+            serialized = serialize_result(result)
+            print(json.dumps(serialized, indent=2))
+        elif args.batch:
+            run_batch(engine, args.output)
+        else:
+            parser.print_help()
+    finally:
+        shutdown_telemetry()
 
 if __name__ == '__main__':
     main()

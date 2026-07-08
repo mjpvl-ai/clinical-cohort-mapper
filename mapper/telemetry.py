@@ -95,3 +95,13 @@ def init_telemetry(log_file: str = "telemetry.log"):
 def get_tracer():
     """Returns the package-level tracer instance."""
     return trace.get_tracer("clinical_cohort_mapper")
+
+def shutdown_telemetry():
+    """Flushes and shuts down the OpenTelemetry provider to ensure all spans are exported."""
+    try:
+        provider = trace.get_tracer_provider()
+        if hasattr(provider, "shutdown"):
+            provider.shutdown()
+            logger.info("Telemetry provider shut down successfully.")
+    except Exception as e:
+        logger.error(f"Error shutting down telemetry provider: {e}")
